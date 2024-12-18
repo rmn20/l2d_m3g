@@ -14,6 +14,12 @@ public final class Vector3D {
 		this.y = y;
 		this.z = z;
 	}
+	
+	public Vector3D(short[] verts, int index, float scale) {
+		this.x = (int) (verts[index * 3 + 0] * scale);
+		this.y = (int) (verts[index * 3 + 1] * scale);
+		this.z = (int) (verts[index * 3 + 2] * scale);
+	}
 
 	public final void set(int x, int y, int z) {
 		this.x = x;
@@ -25,6 +31,38 @@ public final class Vector3D {
 		this.x = v.x;
 		this.y = v.y;
 		this.z = v.z;
+	}
+
+	public final void add(Vector3D v) {
+		this.x += v.x;
+		this.y += v.y;
+		this.z += v.z;
+	}
+
+	public final void sub(Vector3D v) {
+		this.x -= v.x;
+		this.y -= v.y;
+		this.z -= v.z;
+	}
+	
+	public final void mulfp8(int mul) {
+		x = (x * mul) >> 8;
+		y = (y * mul) >> 8;
+		z = (z * mul) >> 8;
+	}
+
+	public final void setFromRotation(int xRot, int yRot) {
+		float xr = xRot * MathUtils.FPI * 2 / (1 << 14);
+		float yr = yRot * MathUtils.FPI * 2 / (1 << 14);
+
+		final float xa = 1f;
+		float ya = xa * (float) Math.cos(xr);
+		float yaYDSin = ya * (float) -Math.sin(yr);
+		float yaYDCos = ya * (float) -Math.cos(yr);
+
+		x = (int) (yaYDSin * (1 << 14));
+		y = (int) (xa * (float) Math.sin(xr) * (1 << 14));
+		z = (int) (yaYDCos * (1 << 14));
 	}
 
 	public final int lengthSquared() {

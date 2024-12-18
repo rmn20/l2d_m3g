@@ -1,19 +1,58 @@
 package com;
 
 public final class MathUtils {
+	public static float FPI = (float) Math.PI;
+	public static float PI_TO_RAD = (float) (180.0 / Math.PI);
 
 	public static float invSqrt(float val) {
 		float var1 = 0.5F * val;
-		int var2 = Float.floatToIntBits(val);
-		return (val = Float.intBitsToFloat(var2 = 1597463007 - (var2 >> 1))) * (1.5F - var1 * val * val);
+		int var2 = 1597463007 - (Float.floatToIntBits(val) >> 1);
+		float var3 = val = Float.intBitsToFloat(var2);
+		
+		return var3 * (1.5F - var1 * var3 * var3);
+	}
+
+	//x range from -1 to 1
+	public static float atan(float x) {
+		return x * (FPI * 0.25f - 0.273f * (Math.abs(x) - 1));
+	}
+
+	public static float atan2(float x1, float z1, float x2, float z2) {
+		float y = x2 - x1;
+		float x = z2 - z1;
+		
+		if(x == 0) {
+			if(y > 0) return 90;
+			else return -90; //y == 0 is undefined
+		}
+		
+		float res;
+		
+		if(Math.abs(y) < Math.abs(x)) {
+			res = PI_TO_RAD * atan(y / x);
+		} else {
+			float tmp = x / y;
+			res = -PI_TO_RAD * atan(tmp);
+			if(tmp > 0) res += 90;
+			else res -= 90;
+		}
+		
+		if(x > 0) {
+			if(y >= 0) res += 180;
+			else res -= 180;
+		}
+		
+		return res;
 	}
 
 	public static Vector3D createNormal(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz) {
-		double var9 = (double) ((long) (ay - by) * (long) (az - cz) - (long) (az - bz) * (long) (ay - cy));
-		double var11 = (double) ((long) (az - bz) * (long) (ax - cx) - (long) (ax - bx) * (long) (az - cz));
-		double var13 = (double) ((long) (ax - bx) * (long) (ay - cy) - (long) (ay - by) * (long) (ax - cx));
-		double var15 = Math.sqrt(var9 * var9 + var11 * var11 + var13 * var13) / 4096.0D;
-		return new Vector3D((int) (var9 / var15), (int) (var11 / var15), (int) (var13 / var15));
+		double x = (double) ((long) (ay - by) * (long) (az - cz) - (long) (az - bz) * (long) (ay - cy));
+		double y = (double) ((long) (az - bz) * (long) (ax - cx) - (long) (ax - bx) * (long) (az - cz));
+		double z = (double) ((long) (ax - bx) * (long) (ay - cy) - (long) (ay - by) * (long) (ax - cx));
+		
+		double len = Math.sqrt(x * x + y * y + z * z) / 4096;
+		
+		return new Vector3D((int) (x / len), (int) (y / len), (int) (z / len));
 	}
 
 	public static int distanceToLine(Vector3D point, Vector3D a, Vector3D b) {
@@ -98,15 +137,11 @@ public final class MathUtils {
 		return (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1) > 0 ? false : ((x3 - x2) * (py - y2) - (px - x2) * (y3 - y2) > 0 ? false : ((x4 - x3) * (py - y3) - (px - x3) * (y4 - y3) > 0 ? false : (x1 - x4) * (py - y4) - (px - x4) * (y1 - y4) <= 0));
 	}
 
-	public static boolean isPointOnPolygon(int px, int pz, Vertex a, Vertex b, Vertex c, int norY) {
+	/*public static boolean isPointOnPolygon(int px, int pz, Vertex a, Vertex b, Vertex c, int norY) {
 		return norY > 0 ? isPointOnPolygon(px, pz, a.x, a.z, b.x, b.z, c.x, c.z) : (norY < 0 ? isPointOnPolygon(px, pz, c.x, c.z, b.x, b.z, a.x, a.z) : false);
 	}
 
 	public static boolean isPointOnPolygon(int px, int pz, Vertex a, Vertex b, Vertex c, Vertex d, int norY) {
 		return norY > 0 ? isPointOnPolygon(px, pz, a.x, a.z, b.x, b.z, c.x, c.z, d.x, d.z) : (norY < 0 ? isPointOnPolygon(px, pz, d.x, d.z, c.x, c.z, b.x, b.z, a.x, a.z) : false);
-	}
-
-	static {
-		new Vector3D();
-	}
+	}*/
 }

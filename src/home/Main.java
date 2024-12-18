@@ -12,7 +12,7 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 
 import com.Font;
-import com.Stringer;
+import com.IniFile;
 import com.Asset;
 import com.SplashScreen;
 
@@ -21,11 +21,10 @@ public final class Main extends MIDlet {
    private boolean run = false;
    private int lastLevel; // номер поледнего уровня
    private Font font;
-   private Stringer gameText;
+   private IniFile gameText;
    private boolean sound = false; // true, ести звук включен
    private int displaySize = 100;
    private int availableLevel = 1; // номер доступного уровня
-
 
    private static boolean isExist(String file) {
       try {
@@ -55,7 +54,7 @@ public final class Main extends MIDlet {
          Main var4 = this;
          this.sound = false;
          this.displaySize = 100;
-         this.availableLevel = 1;
+         this.availableLevel = var1;
 
          try {
             if(Asset.getNumRecords("ZOMBIE") != 0) {
@@ -65,6 +64,7 @@ public final class Main extends MIDlet {
                var4.sound = var6.readBoolean();
                var4.displaySize = var6.readInt();
                var4.availableLevel = var6.readInt();
+			   var4.availableLevel = lastLevel;
             }
          } catch (Exception var3) {
             var3.printStackTrace();
@@ -84,7 +84,7 @@ public final class Main extends MIDlet {
    }
 
    public final void setLanguage(String file) {
-      this.gameText = Stringer.createFromResource(file);
+      this.gameText = IniFile.createFromResource(file);
       this.font = new Font(this.gameText.getString("FONT"));
    }
 
@@ -92,7 +92,7 @@ public final class Main extends MIDlet {
       return this.font;
    }
 
-   public final Stringer getGameText$6783a6a7() {
+   public final IniFile getGameText$6783a6a7() {
       return this.gameText;
    }
 

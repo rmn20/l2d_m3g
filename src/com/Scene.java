@@ -10,7 +10,7 @@ public class Scene {
 	private Vector respawns;
 	private Bot[] bots;
 	private int frame;
-	private Graphics3D g3d;
+	private Renderer g3d;
 	private House house;
 	private int miny;
 	private Respawn start;
@@ -25,7 +25,7 @@ public class Scene {
 		this.random = new Random();
 		this.respawns = new Vector();
 		this.frame = 0;
-		this.g3d = new Graphics3D(width, height);
+		this.g3d = new Renderer(width, height);
 		this.house = house;
 		this.start = start;
 		this.finish = finish;
@@ -74,30 +74,31 @@ public class Scene {
 	}
 
 	private void countWorldSize(House house) {
-		int var2 = Integer.MAX_VALUE;
-		int var3 = Integer.MIN_VALUE;
-		int var4 = Integer.MAX_VALUE;
-		int var5 = Integer.MIN_VALUE;
-		int var6 = Integer.MAX_VALUE;
-		int var7 = Integer.MIN_VALUE;
-		Room[] var11 = house.getRooms();
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		int minZ = Integer.MAX_VALUE;
+		int maxZ = Integer.MIN_VALUE;
+		
+		Room[] rooms = house.getRooms();
 
-		for(int var8 = 0; var8 < var11.length; ++var8) {
-			Room var9;
-			Mesh var10 = (var9 = var11[var8]).getMesh();
-			var2 = Math.min(var2, var9.getMinX());
-			var4 = Math.min(var4, var10.minY());
-			var6 = Math.min(var6, var9.getMinZ());
-			var3 = Math.max(var3, var9.getMaxX());
-			var5 = Math.max(var5, var10.maxY());
-			var7 = Math.max(var7, var9.getMaxZ());
+		for(int i = 0; i < rooms.length; ++i) {
+			Room room = rooms[i];
+			
+			minX = Math.min(minX, room.getMinX());
+			minY = Math.min(minY, room.getMinY());
+			minZ = Math.min(minZ, room.getMinZ());
+			maxX = Math.max(maxX, room.getMaxX());
+			maxY = Math.max(maxY, room.getMaxY());
+			maxZ = Math.max(maxZ, room.getMaxZ());
 		}
 
 		System.out.println("World size:");
-		System.out.println("Size X " + (var3 - var2));
-		System.out.println("Size Y " + (var5 - var4));
-		System.out.println("Size Z " + (var7 - var6));
-		this.miny = var4;
+		System.out.println("Size X " + (maxX - minX));
+		System.out.println("Size Y " + (maxY - minY));
+		System.out.println("Size Z " + (maxZ - minZ));
+		this.miny = minY;
 	}
 
 	private int random(int x) {
@@ -114,22 +115,19 @@ public class Scene {
 			Respawn var4;
 			if((var4 = this.enemies[var3]).part == part) {
 				respawns.addElement(var4);
-			} else {
-				if(this.enemies[var3].respa == true)
-					this.enemies[var3].mode = -127;
 			}
 		}
 
 	}
 
-	public final int render(int part) {
-		part = this.house.render(this.g3d, part);
-		this.g3d.render();
+	public final int render(Graphics g, int x, int y, int part, Vector3D camPos) {
+		g3d.prepareRender(g, x, y);
+		part = this.house.render(this.g3d, part, camPos);
 		return part;
 	}
 
 	public final void flush(Graphics g, int x, int y) {
-		this.g3d.flush(g, 0, y);
+		this.g3d.flush(g);
 	}
 
 	public final void update(Player player) {
@@ -180,7 +178,7 @@ public class Scene {
 				}
 
 				// Если игрок и бот в разных комнатах, или бот провалился, то убрать его
-				if(!var21 || var8.getPart() == -1 || var8.getCharacter().getTransform().m13 < var4.miny << 1) {
+				if(!var21 || var8.getPart() == -1 || var8.getCharacter().getPosition().y < var4.miny << 1) {
 					if(!var8.isDead()) {
 						--var4.enemy_count;
 					}
@@ -250,14 +248,9 @@ public class Scene {
 							var19 = var24 - var19;
 							var31 = var7 - var31;
 							if(var19 * var19 + var31 * var31 > var26 * var26) {
-								if(var30.mode == -128 || var30.mode < var30.cmode) {
-									var29.set(var32);
-									if(var30.mode > -128 && var30.cmode < 255) {
-										var30.cmode++;
-									}
-									var4.house.addObject((RoomObject) var29);
-									++var4.enemy_count;
-								}
+								var29.set(var32);
+								var4.house.addObject((RoomObject) var29);
+								++var4.enemy_count;
 							}
 						}
 					}
@@ -308,7 +301,7 @@ public class Scene {
 		return this.house;
 	}
 
-	public final Graphics3D getG3D() {
+	public final Renderer getG3D() {
 		return this.g3d;
 	}
 
@@ -322,11 +315,11 @@ public class Scene {
 
 	public final boolean isLevelCompleted(Player player) {
 		Character var3;
-		Matrix var4 = (var3 = player.getCharacter()).getTransform();
+		Vector3D var4 = (var3 = player.getCharacter()).getPosition();
 		Vector3D var2 = this.finish.point;
-		int var10000 = var4.m03;
-		int var10001 = var4.m13;
-		int var10002 = var4.m23;
+		int var10000 = var4.x;
+		int var10001 = var4.y;
+		int var10002 = var4.z;
 		int var10003 = var2.x;
 		int var10004 = var2.y;
 		int var10005 = var2.z;
@@ -344,49 +337,6 @@ public class Scene {
 	}
 
 	public final boolean isWinner(Player player) {
-		return player.getFrags() >= this.max_enemy_count;
-	}
-
-	//public an() {}
-	// ???
-	public static int isPointOnMesh(Mesh mesh, int x, int y, int z) {
-		RenderObject[] var8 = mesh.getPoligons();
-		int var4 = Integer.MIN_VALUE;
-
-		for(int var5 = 0; var5 < var8.length; ++var5) {
-			RenderObject var6;
-			int var9;
-			if((var6 = var8[var5]) instanceof Polygon3V) {
-				Polygon3V var7 = (Polygon3V) var6;
-				if(MathUtils.isPointOnPolygon(x, z, var7.a, var7.b, var7.c, var7.ny) && (var9 = a_int_sub(var7.a, var7.nx, var7.ny, var7.nz, x, y, z)) < y && var9 > var4) {
-					var4 = var9;
-				}
-			}
-
-			if(var6 instanceof Polygon4V) {
-				Polygon4V var10 = (Polygon4V) var6;
-				if(MathUtils.isPointOnPolygon(x, z, var10.a, var10.b, var10.c, var10.d, var10.ny) && (var9 = a_int_sub(var10.a, var10.nx, var10.ny, var10.nz, x, y, z)) < y && var9 > var4) {
-					var4 = var9;
-				}
-			}
-		}
-
-		if(var4 != Integer.MIN_VALUE) {
-			return var4;
-		} else {
-			return Integer.MAX_VALUE;
-		}
-	}
-
-	// ???
-	private static int a_int_sub(Vertex a, int nx, int ny, int nz, int px, int py, int pz) {
-		if(ny >= 0) {
-			return Integer.MAX_VALUE;
-		} else {
-			px -= a.x;
-			int var7 = py - a.y;
-			int var8 = pz - a.z;
-			return py - (px * nx + var7 * ny + var8 * nz) / ny;
-		}
+		return true;//player.getFrags() >= this.max_enemy_count;
 	}
 }

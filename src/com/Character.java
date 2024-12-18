@@ -2,152 +2,170 @@ package com;
 
 public final class Character {
 
-	private static Vector3D tmpVec = new Vector3D(); // ? collisionPoint из Ray
-	private int player_radius; // ?
-	private int player_height; // ?
-	private Matrix transform = new Matrix();
+	private static Vector3D tmpVec = new Vector3D();
+	
+	private Vector3D pos = new Vector3D();
+	private Vector3D rot = new Vector3D();
 	private Vector3D speed = new Vector3D();
+	private int radius, height;
+	
 	private boolean onFloor = false;
-	private boolean col = false; // col из Character.collisionTest(Home home)
+	private boolean colDetected = false;
 
 	public Character(int radius, int height) {
-		this.reset();
-		this.set(0, 0);
+		reset();
+		set(0, 0);
 	}
 
 	public final void set(int radius, int height) {
-		this.player_radius = radius;
-		this.player_height = height;
+		this.radius = radius;
+		this.height = height;
 	}
 
 	public final void reset() {
-		this.onFloor = this.col = false;
-		this.speed.set(0, 0, 0);
-		this.transform.setIdentity();
+		onFloor = false;
+		colDetected = false;
+		
+		pos.set(0, 0, 0);
+		rot.set(0, 0, 0);
+		speed.set(0, 0, 0);
 	}
 
 	public final void collisionTest(int part, House house) {
-		tmpVec.set(this.transform.m03, this.transform.m13 + this.player_height, this.transform.m23);
-		this.col = house.sphereCast(part, tmpVec, this.player_radius);
-		if(this.col) {
-			this.transform.m03 = tmpVec.x;
-			this.transform.m13 = tmpVec.y - this.player_height;
-			this.transform.m23 = tmpVec.z;
+		tmpVec.set(pos);
+		tmpVec.y += height;
+		
+		colDetected = house.sphereCast(part, tmpVec, radius);
+		if(colDetected) {
+			pos.set(tmpVec);
+			pos.y -= height;
 		}
 
-		this.onFloor = false;
-		if((part = house.a_int_sub(part, this.transform.m03, this.transform.m13 + this.player_height, this.transform.m23)) != Integer.MAX_VALUE && part > this.transform.m13) {
-			this.transform.m13 = part;
-			this.onFloor = true;
+		onFloor = false;
+		int floorY = house.getFloorY(part, pos.x, pos.y + height, pos.z);
+		if(floorY != Integer.MAX_VALUE && floorY > pos.y) {
+			pos.y = floorY;
+			onFloor = true;
 		}
-
 	}
 
 	// ? расстояние до другого персонажа
-	public final long distance(Character character) {
-		Matrix var2 = this.transform;
-		Matrix var5 = character.transform;
-		int var3 = var2.m03 - var5.m03;
-		int var4 = var2.m13 - var5.m13;
-		int var6 = var2.m23 - var5.m23;
-		return (long) var3 * (long) var3 + (long) var4 * (long) var4 + (long) var6 * (long) var6;
+	public final long distanceSquared(Character ch) {
+		Vector3D pos1 = pos;
+		Vector3D pos2 = ch.pos;
+		
+		int xDist = pos1.x - pos2.x;
+		int yDist = pos1.y - pos2.y;
+		int zDist = pos1.z - pos2.z;
+		
+		return xDist * xDist + yDist * yDist + zDist * zDist;
 	}
 
 	public static void collisionTest(Character c1, Character c2) {
-		Matrix var2 = c1.transform;
-		Matrix var3 = c2.transform;
-		int var10 = c1.player_radius + c2.player_radius;
-		int var11 = var2.m03 - var3.m03;
-		int var4 = var2.m13 - var3.m13;
-		int var5 = var2.m23 - var3.m23;
-		if(Math.abs(var11) <= var10 && Math.abs(var4) <= var10 && Math.abs(var5) <= var10) {
-			long var8;
-			if((var8 = (long) var11 * (long) var11 + (long) var4 * (long) var4 + (long) var5 * (long) var5) < (long) (var10 * var10)) {
-				if(var8 != 0L) {
-					var8 = (long) ((int) (1.0F / MathUtils.invSqrt((float) var8)));
+		Vector3D pos1 = c1.pos;
+		Vector3D pos2 = c2.pos;
+		
+		int rSum = c1.radius + c2.radius;
+		
+		int dx = pos1.x - pos2.x;
+		int dy = pos1.y - pos2.y;
+		int dz = pos1.z - pos2.z;
+		
+		if(Math.abs(dx) <= rSum && Math.abs(dy) <= rSum && Math.abs(dz) <= rSum) {
+			long distSqr = (long)dx*dx + (long)dy*dy + (long)dz*dz;
+			
+			if(distSqr < rSum * rSum) {
+				if(distSqr != 0L) {
+					distSqr = (long) (1.0F / MathUtils.invSqrt(distSqr));
 				} else {
-					var11 = 1;
-				}
+					dx = 1;
+				} 
 
-				var10 = (int) ((long) var10 - var8);
-				Vector3D var12;
-				(var12 = new Vector3D(var11, var4, var5)).setLength(var10 / 2);
-				move(var2, var12.x, var12.y, var12.z);
-				move(var3, -var12.x, -var12.y, -var12.z);
+				int dist = (int) (rSum - distSqr);
+				
+				tmpVec.set(dx, dy, dz);
+				tmpVec.setLength(dist / 2);
+				
+				pos1.add(tmpVec);
+				pos2.sub(tmpVec);
 			}
 
 		}
 	}
 
-	private static void move(Matrix matrix, int dx, int dy, int dz) {
-		matrix.m03 += dx;
-		matrix.m13 += dy;
-		matrix.m23 += dz;
-	}
-
 	public final void moveZ(int d) {
-		if(this.onFloor) {
-			this.speed.x += this.transform.m02 * d >> 14;
-			this.speed.z += this.transform.m22 * d >> 14;
+		if(onFloor) {
+			speed.x += (int) ((float) Math.sin(rot.y / (float)(1 << 14) * MathUtils.FPI * 2) * d);
+			speed.z += (int) ((float) Math.cos(rot.y / (float)(1 << 14) * MathUtils.FPI * 2) * d);
 		}
 
 	}
 
 	public final void moveX(int d) {
-		if(this.onFloor) {
-			this.speed.x += this.transform.m00 * d >> 14;
-			this.speed.z += this.transform.m20 * d >> 14;
+		if(onFloor) {
+			speed.x += (int) ((float) Math.cos(rot.y / (float)(1 << 14) * MathUtils.FPI * 2) * d);
+			speed.z -= (int) ((float) Math.sin(rot.y / (float)(1 << 14) * MathUtils.FPI * 2) * d);
 		}
 
 	}
 
 	public final void rotY(int angle) {
-		this.transform.rotY(angle);
+		rot.y = (rot.y + angle * (1 << 14) / 360) & ((1 << 14) - 1);
 	}
 
-	public final void jump(int jump, float force) {
-		if(this.onFloor) {
-			this.speed.y += jump;
-			this.speed.x = (int) ((float) this.speed.x * force);
-			this.speed.y = (int) ((float) this.speed.y * force);
-			this.speed.x = (int) ((float) this.speed.x * force);
+	public final void rotX(int angle) {
+		rot.x += angle * (1 << 14) / 360;
+	}
+
+	public final void jump(int jump, float accel) {
+		if(onFloor) {
+			speed.y += jump;
+			speed.x = (int) (speed.x * accel);
+			speed.y = (int) (speed.y * accel);
+			speed.z = (int) (speed.z * accel);
 		}
 
 	}
 
 	public final void update() {
-		tmpVec.set(this.speed);
-		int var1 = (int) ((float) this.player_radius * 0.8F);
-		if(tmpVec.lengthSquared() > var1 * var1) {
-			tmpVec.setLength(var1);
+		tmpVec.set(speed);
+		
+		//Limit speed
+		int radLimit = (int) (radius * 0.8F);
+		if(tmpVec.lengthSquared() > radLimit * radLimit) {
+			tmpVec.setLength(radLimit);
 		}
 
-		this.transform.m03 += tmpVec.x;
-		this.transform.m13 += tmpVec.y;
-		this.transform.m23 += tmpVec.z;
-	}
-
-	public final Matrix getTransform() {
-		return this.transform;
+		pos.x += tmpVec.x;
+		pos.y += tmpVec.y;
+		pos.z += tmpVec.z;
 	}
 
 	public final int getRadius() {
-		return this.player_radius;
+		return radius;
 	}
 
 	public final int getHeight() {
-		return this.player_height;
+		return height;
 	}
 
 	public final Vector3D getSpeed() {
-		return this.speed;
+		return speed;
+	}
+
+	public final Vector3D getPosition() {
+		return pos;
+	}
+
+	public final Vector3D getRotation() {
+		return rot;
 	}
 
 	public final boolean isOnFloor() {
-		return this.onFloor;
+		return onFloor;
 	}
 
-	public final boolean isCollision() {
-		return this.col;
+	public final boolean isColDetected() {
+		return colDetected;
 	}
 }

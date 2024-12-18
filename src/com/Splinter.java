@@ -1,13 +1,13 @@
-package com;
+ package com;
 
 final class Splinter {
 
 	private static Texture texture = Texture.createTexture("/splinter.png");
 	private int frame = Integer.MAX_VALUE;
-	private Sprite sprite = new Sprite(5);
+	private Sprite sprite;
 
 	public Splinter() {
-		this.sprite.setTextures(new Texture[]{texture});
+		this.sprite = new Sprite(texture);
 		this.sprite.setScale(5);
 	}
 
@@ -16,13 +16,11 @@ final class Splinter {
 		this.frame = 0;
 	}
 
-	public final void render(Graphics3D g3d, int sz) {
+	public final void render(Renderer g3d, int sz) {
 		++this.frame;
 		this.sprite.setScale(5 * this.frame);
 		this.sprite.setOffset(0, -this.sprite.getHeight() / 2 - this.frame * 40);
-		this.sprite.project(g3d.getInvCamera(), g3d);
-		g3d.addRenderObject((RenderObject) this.sprite);
-		this.sprite.sz += 1500;
+		g3d.addSprite(this.sprite);
 	}
 
 	// true, если проигрывается анимация осколка

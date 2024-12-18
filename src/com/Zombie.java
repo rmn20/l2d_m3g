@@ -1,124 +1,122 @@
 package com;
 
 import java.util.Vector;
+import javax.microedition.m3g.Node;
 
 public final class Zombie extends Bot {
 
-	private static final int max_hp = Stringer.createFromResource("/setting.txt").getInt("LIFE_ZOMBIE");
-	private static int damage_value = 1;
-	private static short[][] animData;
-	private static Asset meshData;
-	private static final int model_height; // высота по y
+	private static final int maxHp = IniFile.createFromResource("/setting.txt").getInt("LIFE_ZOMBIE");
+	private static int damageValue = 1;
+	private static final int modelHeight;
+	private static MeshData[] meshes;
+	
 	private int state = -1;
-	private Morphing animation;
+	private Morphing anim;
+	private Node mesh;
 	private Player enemy = null;
-	private Vector3D dir = new Vector3D();
+	private Vector3D targetPos = new Vector3D();
+
+	static {
+		Texture texture = Texture.createTexture("/zombie.png");
+		meshes = MeshData.loadMeshes("/zombie.3d", 4.5F, texture.w, true, false);
+		
+		MeshData mesh = meshes[0];
+		mesh.setTexture(texture);
+
+		Vector3D min = new Vector3D(), max = new Vector3D();
+		mesh.calculateAABB(min, max);
+		modelHeight = max.y - min.y;
+	}
 
 	public Zombie(Vector3D pos) {
-		this.animation = new Morphing(animData, meshData.copy());
-		this.set(pos);
+		anim = new Morphing(meshes);
+		mesh = anim.getMesh();
+		set(pos);
 	}
 
 	public final void set(Vector3D pos) {
 		super.set(pos);
-		this.setHp(max_hp);
-		this.setCharacterSize(model_height);
+		setHp(maxHp);
+		setCharacterSize(modelHeight);
 	}
 
 	public final void destroy() {
 		super.destroy();
-		this.enemy = null;
-		this.animation.getMesh().destroy();
-		this.animation.destroy();
-		this.animation = null;
+		enemy = null;
+		//anim.getMesh().destroy();
+		anim.destroy();
+		anim = null;
 	}
 
-	public final void render(Graphics3D g3d, int x1, int y1, int x2, int y2) {
-		Matrix var6 = this.getCharacter().getTransform();
-		var6 = g3d.computeFinalMatrix(var6);
-		if(this.state == 1) {
-			this.animation.setFrame(this.getFrame() * 140);
+	public final void render(Renderer g3d) {
+		//Matrix var6 = getCharacter().getTransform();
+		//var6 = g3d.computeFinalMatrix(var6);
+		if(state == 1) {
+			anim.setFrame(getFrame() * 140);
+		} else if(state == 2) {
+			anim.setFrame(getFrame() * 140 * 5);
 		}
 
-		if(this.state == 2) {
-			this.animation.setFrame(this.getFrame() * 140 * 5);
-		}
-
-		g3d.transformAndProjectVertices(this.animation.getMesh(), var6);
-		g3d.addMesh(this.animation.getMesh(), x1, y1, x2, y2);
-		increaseMeshSz(this.animation.getMesh(), 1000);
-		this.renderBlood(g3d, 1500);
+		//g3d.transformAndProjectVertices(animation.getMesh(), var6);
+		Character ch = character;
+		Vector3D pos = ch.getPosition();
+		Vector3D rot = ch.getRotation();
+		g3d.addMesh(mesh, pos, rot);
+		//increaseMeshSz(animation.getMesh(), 1000);
+		renderBlood(g3d, 1500);
 	}
 
 	protected final void action(Scene scene) {
-		if(this.getFrame() % 8 == 0) {
-			House var7;
-			Vector var2 = (var7 = scene.getHouse()).getObjects();
-			if(this.enemy != null && this.enemy.isDead()) {
-				this.enemy = null;
-			}
+		if(getFrame() % 8 == 0) {
+			House house = scene.getHouse();
+			Vector objs = house.getObjects();
+			Character ch = getCharacter();
 
-			if(this.enemy == null) {
-				this.enemy = find(var2);
-			}
+			if(enemy != null && enemy.isDead()) enemy = null;
+			if(enemy == null) enemy = find(objs);
 
-			if(this.enemy != null) {
-				Vector3D var4 = this.dir;
-				Player var3 = this.enemy;
-				boolean var10000;
-				if(this.notCollided(var7, var3)) {
-					Matrix var8 = var3.getCharacter().getTransform();
-					var4.set(var8.m03, var8.m13, var8.m23);
-					var10000 = true;
-				} else {
-					Portal var9;
-					if((var9 = commonPortal(var7, this.getPart(), var3.getPart())) != null) {
-						computeCentre(var9, var4);
-					}
-
-					var10000 = false;
-				}
-
-				boolean var10 = var10000;
-				this.lookAt(this.dir.x, this.dir.z);
-				long var5 = this.getCharacter().distance(this.enemy.getCharacter());
-				if(var10 && (float) var5 <= (float) sqr(this.getCharacter().getRadius() + this.enemy.getCharacter().getRadius()) * 1.2F) {
-					this.state = 2;
-				} else {
-					if(this.getCharacter().isCollision()) {
-						this.getCharacter().jump(140, 1.2F);
-					}
-
-					this.state = 1;
-				}
+			if(enemy == null) {
+				state = -1;
 			} else {
-				this.state = -1;
+				Player target = enemy;
+
+				boolean targetVisible = false;
+
+				if(visbilityCheck(house, target)) {
+					//Walk towards target
+					targetPos.set(target.getCharacter().getPosition());
+
+					targetVisible = true;
+				} else {
+					//Walk towards portal
+					Portal portal = commonPortal(house, getPart(), target.getPart());
+					if(portal != null) computePortalCentre(portal, targetPos);
+				}
+
+				lookAt(targetPos.x, targetPos.z);
+				long distance = ch.distanceSquared(enemy.getCharacter());
+
+				if(targetVisible && distance <= sqr(ch.getRadius() + enemy.getCharacter().getRadius()) * 1.2F) {
+					state = 2;
+				} else {
+					if(ch.isColDetected()) ch.jump(140, 1.2F);
+					state = 1;
+				}
 			}
 		}
 
-		if(this.state == 1) {
-			this.moveZ(140);
+		if(state == 1) {
+			moveZ(140);
 		}
 
-		if(this.state == 2 && this.getFrame() % 4 == 0) {
-			this.enemy.damage(this, damage_value);
+		if(state == 2 && getFrame() % 4 == 0) {
+			enemy.damage(this, damageValue);
 		}
 
 	}
 
 	protected final void drop(Scene scene) {
 		super.drop(scene);
-		this.state = -1;
-	}
-
-	static {
-		Texture texture;
-		(texture = Texture.createTexture("/zombie.png")).setPerspectiveCorrection(false);
-		Mesh[] meshes;
-		Mesh mesh;
-		(mesh = (meshes = Room.loadMeshes("/zombie.3d", 4.5F, 4.5F, 4.5F))[0]).setTexture(texture);
-		model_height = mesh.maxY() - mesh.minY();
-		meshData = new Asset(mesh);
-		animData = Morphing.create(meshes);
+		state = -1;
 	}
 }

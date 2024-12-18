@@ -8,92 +8,89 @@ public class Arsenal {
 	private Weapon[] weapons; // Всё купленное оружие
 	private int current;  // Номер выбранного оружия
 
-	public Arsenal(int width_g3d, int height_g3d) {
-		this.current = 0;
-		this.weapons = new Weapon[5];
-		this.weapons[0] = Stringer.createWeapon(0);
+	public static Weapon createWeapon(int index) {
+		return index == 0 ? new Weapon("/pistol.png", "/fire.png", 1.0F, 1.0F, 20, 4, 2, false, 12, 10)
+				: (index == 1 ? new Weapon("/pistol.png", "/fire.png", 1.0F, 1.0F, 40, 4, 2, true, 24, 15)
+				: (index == 2 ? new Weapon("/shotgun.png", "/fire.png", 0.755F, 1.0F, 90, 5, 2, false, 6, 15)
+				: (index == 3 ? new Weapon("/m16.png", "/fire.png", 0.82F, 0.9F, 35, 2, 2, false, 30, 10)
+				: (index == 4 ? new Weapon("/uzi.png", "/fire.png", 0.55F, 0.9F, 20, 1, 1, false, 30, 10) : null))));
+	}
 
-		for(int var3 = 0; var3 < this.weapons.length; ++var3) {
-			if(this.weapons[var3] != null) {
-				this.weapons[var3].reset();
-				if(!this.weapons[var3].isTwoHands()) {
-					this.weapons[var3].setAmmo(200);
-				} else {
-					this.weapons[var3].setAmmo(400);
-				}
-			}
+	public Arsenal(int scrW, int scrH) {
+		current = 0;
+		weapons = new Weapon[5];
+		weapons[0] = createWeapon(0);
+
+		for(int i = 0; i < weapons.length; i++) {
+			if(weapons[i] == null) continue;
+
+			weapons[i].reset();
+			weapons[i].setAmmo(weapons[i].isTwoHands() ? 400 : 200);
 		}
 
-		this.current = 0;
-		this.currentWeapon().createSprite(width_g3d, height_g3d);
+		current = 0;
+		weapons[0].createSprite(scrW, scrH);
 	}
 
 	public final void destroy() {
-		for(int var1 = 0; var1 < this.weapons.length; ++var1) {
-			if(this.weapons[var1] != null) {
-				this.weapons[var1].reset();
-				this.weapons[var1] = null;
+		for(int i = 0; i < weapons.length; i++) {
+			if(weapons[i] != null) {
+				weapons[i].reset();
+				weapons[i] = null;
 			}
 		}
 
-		this.weapons = null;
+		weapons = null;
 	}
 
 	public final Weapon currentWeapon() {
-		return this.weapons[this.current];
+		return weapons[current];
 	}
 
 	public final Weapon[] getWeapons() {
-		return this.weapons;
+		return weapons;
 	}
 
 	// Смена оружия
-	public final void next(int width, int height) {
+	public final void nextWeapon(int scrW, int scrH) {
 		while(true) {
-			if(this.currentWeapon() != null) {
-				this.currentWeapon().reset();
+			if(currentWeapon() != null) {
+				currentWeapon().reset();
 			}
 
-			++this.current;
-			this.current %= this.weapons.length;
-			if(this.currentWeapon() != null) {
-				this.currentWeapon().createSprite(width, height);
-				return;
+			current++;
+			current %= weapons.length;
+			
+			if(currentWeapon() != null) {
+				currentWeapon().createSprite(scrW, scrH);
+				break;
 			}
-
-			//var1 = var1;
-			//this = this;
 		}
 	}
 
 	// ? Прорисовка оружия и полоски перезарядки
-	public final void drawWeapon(Graphics g, int y, int width, int height) {
-		Weapon var5;
-		(var5 = this.currentWeapon()).draw(g, 0, y, width, height);
-		if(var5.isReloading()) {
-			width /= 2;
-			int var6 = Math.max(height / 50, 6);
-			int var10001 = width - width / 2;
-			int var10002 = height - var6 - 2 + y;
-			int var10004 = var6;
-			var6 = var5.reloadingPercentage();
-			int var7 = var10004;
-			height = width;
-			width = var10002;
-			y = var10001;
-			g.setColor(16777215);
-			g.drawRect(y, width, height, var7);
-			g.fillRect(y, width, height * var6 / 100, var7);
+	public final void drawWeapon(Graphics g, int y, int w, int h) {
+		Weapon weapon = currentWeapon();
+		weapon.draw(g, 0, y, w, h);
+
+		if(weapon.isReloading()) {
+			int barW = w / 2;
+			int barH = Math.max(h / 50, 6);
+			
+			int barX = (w - barW) / 2;
+			int barY = h - barH - 2 + y;
+			
+			int percentage = weapon.reloadingPercentage();
+			
+			g.setColor(0xffffff);
+			g.drawRect(barX, barY, barW, barH);
+			g.fillRect(barX, barY, barW * percentage / 100, barH);
 		}
-
-	}
-
-	public Arsenal() {
 	}
 
 	// ?
 	public static Image resize(Image img, float scaleW, float scaleH) {
-		return resize(img, (int) ((float) img.getWidth() * scaleW), (int) ((float) img.getHeight() * scaleH));
+		return resize(img, (int) (img.getWidth() * scaleW), (int) (img.getHeight() * scaleH));
 	}
 
 	// ?

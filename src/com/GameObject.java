@@ -2,9 +2,8 @@ package com;
 
 public abstract class GameObject extends RoomObject {
 
-	protected static final Matrix matrix = new Matrix(); // неизвестное название!
 	private int frame;
-	private final Character character = new Character(0, 0);
+	protected final Character character = new Character(0, 0);
 	private int hp;
 
 	protected final void setCharacterSize(int modelHeight) {
@@ -79,10 +78,10 @@ public abstract class GameObject extends RoomObject {
 	}
 
 	public final int getPosX() {
-		return this.character.getTransform().m03;
+		return this.character.getPosition().x;
 	}
 
 	public final int getPosZ() {
-		return this.character.getTransform().m23;
+		return this.character.getPosition().z;
 	}
 }

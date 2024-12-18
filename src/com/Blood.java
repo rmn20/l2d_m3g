@@ -2,46 +2,49 @@ package com;
 
 final class Blood {
 
-	private static final Texture blood = Texture.createTexture("/blood.png");
-	private GameObject obj;
+	private static final Texture bloodTex = Texture.createTexture("/blood.png");
+	
+	private GameObject parent;
 	private int frame = Integer.MAX_VALUE;
-	private Sprite sprite = new Sprite(5);
+	private Sprite sprite;
 
 	public Blood(GameObject obj) {
-		this.obj = obj;
-		this.sprite.setTextures(new Texture[]{blood});
-		this.sprite.setScale(5);
+		parent = obj;
+
+		sprite = new Sprite(bloodTex);
+		sprite.setScale(5);
 	}
 
 	public final void reset() {
-		this.sprite.setScale(5);
-		this.frame = Integer.MAX_VALUE;
+		sprite.setScale(5);
+		frame = Integer.MAX_VALUE;
 	}
 
 	public final void destroy() {
-		this.obj = null;
-		this.sprite.destroy();
-		this.sprite = null;
+		parent = null;
+		sprite.destroy();
+		sprite = null;
 	}
 
 	public final void bleed() {
-		this.frame = 0;
-		this.sprite.mirX = !this.sprite.mirX;
-		this.sprite.mirY = !this.sprite.mirX;
+		frame = 0;
+		sprite.mirX = !sprite.mirX;
+		sprite.mirY = !sprite.mirY;
 	}
 
-	public final void render(Graphics3D g3d, int sz) {
-		Matrix var3 = this.obj.getCharacter().getTransform();
-		this.sprite.getPosition().set(var3.m03, var3.m13 + this.obj.getCharacter().getHeight(), var3.m23);
-		++this.frame;
-		this.sprite.setScale(5 * this.frame);
-		this.sprite.setOffset(0, -this.sprite.getHeight() / 2 - this.frame * 40);
-		this.sprite.project(g3d.getInvCamera(), g3d);
-		g3d.addRenderObject((RenderObject) this.sprite);
-		this.sprite.sz += sz;
+	public final void render(Renderer g3d, int sz) {
+		Character parentCh = parent.getCharacter();
+		Vector3D parentPos = parentCh.getPosition();
+
+		sprite.getPosition().set(parentPos.x, parentPos.y + parentCh.getHeight(), parentPos.z);
+
+		frame++;
+		sprite.setScale(5 * frame);
+		sprite.setOffset(0, -sprite.getHeight() / 2 - frame * 40);
+		g3d.addSprite(sprite);
 	}
 
 	public final boolean isBleeding() {
-		return this.frame < 7;
+		return frame < 7;
 	}
 }
