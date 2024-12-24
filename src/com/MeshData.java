@@ -375,9 +375,9 @@ public class MeshData {
 			short[] posesData = new short[poses.getVertexCount() * poses.getComponentCount()];
 			int posesIndex = 0;
 			
-			/*VertexArray norms = new VertexArray(genPols3v.length + genPols4v.length, 3, 1);
+			VertexArray norms = new VertexArray(genPols3v.length + genPols4v.length, 3, 1);
 			byte[] normsData = new byte[poses.getVertexCount() * poses.getComponentCount()];
-			int normsIndex = 0;*/
+			int normsIndex = 0;
 
 			VertexArray uvms = new VertexArray(genPols3v.length + genPols4v.length, 2, 1);
 			byte[] uvData = new byte[uvms.getVertexCount() * uvms.getComponentCount()];
@@ -409,7 +409,7 @@ public class MeshData {
 				System.arraycopy(genUV3v, i * 6 + 0, uvData, uvIndex + 4, 2);
 				uvIndex += 6;
 				
-				/*int ax = verts[v1Index * 3 + 0], 
+				int ax = verts[v1Index * 3 + 0], 
 					ay = verts[v1Index * 3 + 1], 
 					az = verts[v1Index * 3 + 2];
 
@@ -430,7 +430,7 @@ public class MeshData {
 				normsData[normsIndex + 0] = normsData[normsIndex + 3] = normsData[normsIndex + 6] = (byte) (-norm.x * 127 / 4096);
 				normsData[normsIndex + 1] = normsData[normsIndex + 4] = normsData[normsIndex + 7] = (byte) (-norm.y * 127 / 4096);
 				normsData[normsIndex + 2] = normsData[normsIndex + 5] = normsData[normsIndex + 8] = (byte) (-norm.z * 127 / 4096);
-				normsIndex += 9;*/
+				normsIndex += 9;
 			}
 
 			int p4vCount = genPols4v.length / 4;
@@ -457,7 +457,7 @@ public class MeshData {
 				System.arraycopy(genUV4v, i * 8 + 2, uvData, uvIndex + 6, 2);
 				uvIndex += 8;
 				
-				/*int ax = verts[v1Index * 3 + 0], 
+				int ax = verts[v1Index * 3 + 0], 
 					ay = verts[v1Index * 3 + 1], 
 					az = verts[v1Index * 3 + 2];
 
@@ -478,17 +478,17 @@ public class MeshData {
 				normsData[normsIndex + 0] = normsData[normsIndex + 3] = normsData[normsIndex + 6] = normsData[normsIndex + 9] = (byte) (-norm.x * 127 / 4096);
 				normsData[normsIndex + 1] = normsData[normsIndex + 4] = normsData[normsIndex + 7] = normsData[normsIndex + 10] = (byte) (-norm.y * 127 / 4096);
 				normsData[normsIndex + 2] = normsData[normsIndex + 5] = normsData[normsIndex + 8] = normsData[normsIndex + 11] = (byte) (-norm.z * 127 / 4096);
-				normsIndex += 12;*/
+				normsIndex += 12;
 			}
 
 			poses.set(0, poses.getVertexCount(), posesData);
 			uvms.set(0, uvms.getVertexCount(), uvData);
-			//norms.set(0, norms.getVertexCount(), normsData);
+			norms.set(0, norms.getVertexCount(), normsData);
 
 			VertexBuffer vb = new VertexBuffer();
 			vb.setPositions(poses, scale, new float[] {0,0,0});
 			vb.setTexCoords(0, uvms, 1f / textureSize, new float[] {128f / textureSize, 128f / textureSize, 128f / textureSize});
-			//vb.setNormals(norms);
+			vb.setNormals(norms);
 
 			TriangleStripArray tsa = new TriangleStripArray(0, stripLengths);
 
