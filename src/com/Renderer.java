@@ -38,14 +38,14 @@ public final class Renderer {
 		float fovy = 73.5f;
 		nearPlane = 10;
 		
-		cam.setPerspective(fovy, (float)width / height, nearPlane, 300000);
-		cam.getProjection(camPers);
-		camPers.get(camPersTmp);
+		setPerspective(camPersTmp, fovy, (float) width / height, nearPlane, 300000);
 		System.arraycopy(camPersTmp, 0, camPersTmp2, 0, 16);
+		camPers.set(camPersTmp);
+		cam.setGeneric(camPers);
 		
 		bck.setColorClearEnable(false);
 		
-		viewportPhysH = (float)(Math.sin(Math.toRadians(fovy) / 2.0) / Math.cos(Math.toRadians(fovy) / 2.0) * nearPlane) * 2f;
+		viewportPhysH = (float)(Math.tan(Math.toRadians(fovy / 2.0f)) * nearPlane) * 2f;
 		viewportPhysW = viewportPhysH * width / height;
 		
 		projXscale = width / viewportPhysW;
@@ -65,6 +65,17 @@ public final class Renderer {
 
 	public final int getHeight() {
 		return this.height;
+	}
+	
+	private void setPerspective(float[] mat, float fovy, float aspect, float near, float far) {
+		float tmp1 = (float) Math.tan(Math.toRadians(fovy / 2.0f));
+		float tmp2 = far - near;
+
+		mat[0] = 1.0f / (aspect * tmp1);
+		mat[5] = 1.0f / tmp1;
+		mat[10] = -(near + far) / tmp2;
+		mat[11] = -2.0f * near * far / tmp2;
+		mat[14] = -1.0f;
 	}
 
 	public final void setCamera(Vector3D pos, Vector3D rot) {
@@ -104,7 +115,7 @@ public final class Renderer {
 			camPers.set(mat);
 			cam.setGeneric(camPers);
 			g3d.setCamera(cam, camTrans);
-
+			
 			g3d.setViewport(x1 + renderX, y1 + renderY, x2 - x1, y2 - y1);
 		} catch (Exception e) {
 			System.out.println(x1 + " " + y1 + " " + x2 + " " + y2);
