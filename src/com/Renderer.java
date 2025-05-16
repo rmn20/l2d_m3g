@@ -1,11 +1,9 @@
 package com;
 
-import java.util.Hashtable;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
-import javax.microedition.m3g.Light;
 import javax.microedition.m3g.Node;
 import javax.microedition.m3g.Transform;
 

@@ -219,6 +219,7 @@ public final class House {
 			if(portal == prevPortal) continue;
 			
 			if(!reachedPortals.contains(portal)) reachedPortals.addElement(portal);
+			if(portal.getVisibleRoomId(g3d) == mainRoom.getId()) continue;
 			if(!portal.isVisible(g3d, x1, y1, x2, y2)) continue;
 
 			int minX = portal.getMinX();
@@ -236,8 +237,8 @@ public final class House {
 			int sizeY = maxY - minY;
 			if((sizeX < 20 && sizeY < 20) || sizeX < 5 || sizeY < 5) continue;
 			
-			Room room = portal.getRoom1();
-			if(room == mainRoom) room = portal.getRoom2();
+			Room room = portal.getRoomFront();
+			if(room == mainRoom) room = portal.getRoomBack();
 
 			if(room != null) {
 				if(nearRooms.contains(room) && room.viewportContains(minX, minY, maxX, maxY)) continue;
@@ -253,6 +254,7 @@ public final class House {
 		
 		for(int i = 0; i < reachedPortals.size(); i++) {
 			Portal p = (Portal) reachedPortals.elementAt(i);
+			if(!p.isViewportCalculated()) continue;
 
 			Vector3D[] verts = p.getProjVertices();
 			int projVertsCount = p.getProjVertsCount();

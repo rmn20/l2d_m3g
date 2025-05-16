@@ -20,8 +20,7 @@ public class Room {
 		this.mesh = mesh;
 		this.id = id;
 
-		Vector3D min = new Vector3D(), max = new Vector3D();
-		mesh.calculateAABB(min, max);
+		Vector3D min = mesh.getAABBMin(), max = mesh.getAABBMax();
 		
 		this.minx = min.x;
 		this.maxx = max.x;
@@ -167,7 +166,7 @@ public class Room {
 	}
 
 	public final boolean viewportContains(int x1, int y1, int x2, int y2) {
-		return !(x1 >= this.x2 || y1 >= this.y2 || x2 < this.x1 || y2 < this.y1);
+		return x1 >= this.x1 && y1 >= this.y1 && x2 <= this.x2 && y2 <= this.y2;
 	}
 	//public aq() {}
 }

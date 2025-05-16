@@ -14,11 +14,9 @@ public final class Vector3D {
 		this.y = y;
 		this.z = z;
 	}
-	
-	public Vector3D(short[] verts, int index, float scale) {
-		this.x = (int) (verts[index * 3 + 0] * scale);
-		this.y = (int) (verts[index * 3 + 1] * scale);
-		this.z = (int) (verts[index * 3 + 2] * scale);
+
+	public Vector3D(Vector3D v) {
+		set(v);
 	}
 
 	public final void set(int x, int y, int z) {

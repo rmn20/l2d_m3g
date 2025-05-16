@@ -5,7 +5,7 @@ import javax.microedition.m3g.Texture2D;
 public class Skybox {
 
 	private boolean animation;
-	private Texture texture;
+	private Texture tex;
 	private MeshData mesh;
 	private int x1, y1, x2, y2;
 	private boolean resetView;
@@ -18,19 +18,18 @@ public class Skybox {
 		this.animation = false;
 		this.resetView = true;
 		
-		this.texture = Texture.createTexture(texturePath);
-		this.texture.tex.setWrapping(Texture2D.WRAP_REPEAT, Texture2D.WRAP_REPEAT);
+		this.tex = Texture.createTexture(texturePath);
 		
-		this.mesh = MeshData.loadMesh(modelPath, 300.0F, texture.w, true);
-		this.mesh.setTexture(this.texture);
+		this.mesh = MeshData.loadMeshes3D2(modelPath, this.tex.img, 300.0F * 300, false, true)[0];
 
 		this.mesh.getM3GMesh().getAppearance(0).getCompositingMode().setDepthWriteEnable(false);
 		this.mesh.getM3GMesh().getAppearance(0).getCompositingMode().setDepthTestEnable(true);
+		this.mesh.getM3GMesh().getAppearance(0).setFog(null);
 	}
 
 	public void destroy() {
-		this.texture.destroy();
-		this.texture = null;
+		this.tex.destroy();
+		this.tex = null;
 		this.mesh.destroy();
 		this.mesh = null;
 	}
@@ -60,9 +59,10 @@ public class Skybox {
 
 	public void render(Renderer g3d, Vector3D camPos) {
 		if(animation) {
-			texture.tex.setTranslation((float)frame / texture.w, 0, 0);
+			Texture2D tex = mesh.getM3GMesh().getAppearance(0).getTexture(0);
+			tex.setTranslation((float)frame / this.tex.w, 0, 0);
 			frame += 1;
-			if(frame >= texture.w) frame = 0;
+			if(frame >= this.tex.w) frame = 0;
 		}
 		
 		g3d.setClip(x1, y1, x2, y2);

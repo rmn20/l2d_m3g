@@ -23,7 +23,7 @@ public final class Sprite {
 		Appearance ap = new Appearance();
 		ap.setCompositingMode(cm);
 
-		s3d = new Sprite3D(true, tex.tex.getImage(), ap);
+		s3d = new Sprite3D(true, tex.img, ap);
 		s3d.setCrop(0, 0, tex.w, tex.h);
 	}
 

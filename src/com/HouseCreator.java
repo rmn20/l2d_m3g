@@ -20,49 +20,63 @@ public class HouseCreator {
 		}
 		
 		MeshData portalsMesh = meshes[meshes.length - 1];
-		float meshScale = portalsMesh.getScale();
 		
-		short[] verts = portalsMesh.getVertices();
-		short[] p4vs = portalsMesh.get4VPols(), p3vs = portalsMesh.get3VPols();
+		short[] pols = portalsMesh.getPols();
 		
-		int p4vsCount = p4vs.length / 4, p3vsCount = p3vs.length / 3;
-		Portal[] portals = new Portal[p4vsCount + p3vsCount];
+		int quadsCount = portalsMesh.getQuadsCount();
+		int trisCount = portalsMesh.getTrisCount();
+		
+		Portal[] portals = new Portal[quadsCount + trisCount];
 		System.out.println(portals.length + " portals");
 		
 		for(int i = 0; i < portals.length; i++) {
 			Vector3D[] portalVerts;
 
-			if(i < p3vsCount) {
+			if(i < quadsCount) {
+				int tmpI = i * 4; 
+				
 				portalVerts = new Vector3D[] {
-					new Vector3D(verts, p3vs[i * 3], meshScale), 
-					new Vector3D(verts, p3vs[i * 3 + 1], meshScale), 
-					new Vector3D(verts, p3vs[i * 3 + 2], meshScale)
+					portalsMesh.getVertex(pols[tmpI], true),
+					portalsMesh.getVertex(pols[tmpI + 1], true),
+					portalsMesh.getVertex(pols[tmpI + 2], true),
+					portalsMesh.getVertex(pols[tmpI + 3], true)
 				};
 			} else {
-				int tmpI = i - p3vsCount;
+				int tmpI = (quadsCount * 4) + (i - quadsCount) * 3;
+				
 				portalVerts = new Vector3D[] {
-					new Vector3D(verts, p4vs[tmpI * 4], meshScale), 
-					new Vector3D(verts, p4vs[tmpI * 4 + 1], meshScale), 
-					new Vector3D(verts, p4vs[tmpI * 4 + 2], meshScale),
-					new Vector3D(verts, p4vs[tmpI * 4 + 3], meshScale)
+					portalsMesh.getVertex(pols[tmpI], true),
+					portalsMesh.getVertex(pols[tmpI + 1], true),
+					portalsMesh.getVertex(pols[tmpI + 2], true)
 				};
 			}
 			
 			Room room1 = null, room2 = null;
+			int room1CommonVtx = 0, room2CommonVtx = 0;
 			
 			for(int t=0; t<rooms.length; t++) {
 				Room room = rooms[t];
 				
-				if(isExistsCommonCoords(room.getMesh(), portalVerts)) {
-					if(room1 == null) room1 = room;
-					else if(room2 == null) room2 = room;
-					else break;
+				int vtxCommon = countCommonVtx(room.getMesh(), portalVerts);
+				
+				if(vtxCommon > 0) {
+					if(vtxCommon > room1CommonVtx) {
+						room2 = room1;
+						room2CommonVtx = room1CommonVtx;
+						
+						room1 = room;
+						room1CommonVtx = vtxCommon;
+					} else if(vtxCommon > room2CommonVtx) {
+						room2 = room;
+						room2CommonVtx = vtxCommon;
+					}
 				}
 			}
 			
 			Portal p = new Portal(portalVerts);
-			p.setRooms(room1, room2);
 			portals[i] = p;
+			
+			setPortalRooms(p, room1, room2);
 			
 			if(room1 != null) roomPortals[room1.getId()].addElement(p);
 			if(room2 != null) roomPortals[room2.getId()].addElement(p);
@@ -76,26 +90,26 @@ public class HouseCreator {
 			rooms[i].setPortals(tmp);
 		}
 
-		countPortals(rooms);
+		countPortals(rooms, portals);
 		Room[][] neighbours = createNeighbours(rooms);
 		return new House(rooms, neighbours, portals);
 	}
 
-	private static void countPortals(Room[] rooms) {
+	private static void countPortals(Room[] rooms, Portal[] portals) {
 		int disconnectedPortals = 0;
 		int disconnectedRooms = 0;
 
 		for(int i = 0; i < rooms.length; ++i) {
-			Portal[] portals = rooms[i].getPortals();
-			if(portals == null || portals.length == 0) {
+			Portal[] roomPortals = rooms[i].getPortals();
+			if(roomPortals == null || roomPortals.length == 0) {
 				++disconnectedRooms;
 			}
+		}
 
-			for(int t = 0; t < portals.length; ++t) {
-				Portal p = portals[t];
-				if(p.getRoom1() == null || p.getRoom2() == null) {
-					++disconnectedPortals;
-				}
+		for(int t = 0; t < portals.length; ++t) {
+			Portal p = portals[t];
+			if(p.getRoomFront() == null || p.getRoomBack() == null) {
+				++disconnectedPortals;
 			}
 		}
 
@@ -119,8 +133,8 @@ public class HouseCreator {
 			Vector nearRooms = new Vector();
 
 			for(int t = 0; t < portals.length; ++t) {
-				Room room1 = portals[t].getRoom1();
-				Room room2 = portals[t].getRoom2();
+				Room room1 = portals[t].getRoomFront();
+				Room room2 = portals[t].getRoomBack();
 				
 				if(room1 != room && room1 != null && !nearRooms.contains(room1)) {
 					nearRooms.addElement(room1);
@@ -138,39 +152,165 @@ public class HouseCreator {
 		return neighbours;
 	}
 
-	private static boolean isExistsCommonCoords(MeshData mesh, Vector3D[] poly) {
-		int var2 = 0;
-
-		while(var2 < poly.length) {
-			Vector3D v = poly[var2];
-			short[] verts = mesh.getVertices();
-			int vertsCount = verts.length / 3;
-			float meshScale = mesh.getScale();
-			int var5 = 0;
-
-			while(true) {
-				boolean hit;
-				if(var5 < vertsCount) {
-					Vector3D v2 = new Vector3D(verts, var5, meshScale);
-					if(v2.x / 50 != v.x / 50 || v2.y / 50 != v.y / 50 || v2.z / 50 != v.z / 50) {
-						var5++;
-						continue;
-					}
-
-					hit = true;
-				} else {
-					hit = false;
-				}
-
-				if(hit) {
-					return true;
-				}
-
-				++var2;
+	private static int countCommonVtx(MeshData mesh, Vector3D[] portalVerts) {
+		//AABB check
+		Vector3D aabbMin = mesh.getAABBMin();
+		Vector3D aabbMax = mesh.getAABBMax();
+		
+		//Check if at least one portal vertex is inside AABB
+		for(int pVtx = 0; pVtx < portalVerts.length; pVtx++) {
+			Vector3D v = portalVerts[pVtx];
+			
+			if(
+				v.x < aabbMin.x - 50 || v.y < aabbMin.y - 50 || v.z < aabbMin.z - 50 ||
+				v.x > aabbMax.x + 50 || v.y > aabbMax.y + 50 || v.z > aabbMax.z + 50
+			) {
+				if(pVtx == portalVerts.length - 1) return 0;
+			} else {
 				break;
 			}
 		}
+		
+		//Count common vertices
+		int commonVertsBitmask = 0;
+		int commonVerts = 0;
+		
+		Vector3D tmp = new Vector3D();
+		int meshVertsCount = mesh.getVerts().length / 3;
+			
+		for(int meshVtx = 0; meshVtx < meshVertsCount; meshVtx++) {
+			Vector3D v = mesh.getVertex(meshVtx, true);
+			
+			for(int pVtx = 0; pVtx < portalVerts.length; pVtx++) {
+				//Skip already counted portal verts
+				if((commonVertsBitmask & (1 << pVtx)) != 0) continue;
+				
+				Vector3D v2 = portalVerts[pVtx];
+				
+				tmp.set(v);
+				tmp.sub(v2);
+				
+				if(Math.abs(tmp.x) <= 50 && Math.abs(tmp.y) <= 50 && Math.abs(tmp.z) <= 50) {
+					commonVertsBitmask |= 1 << pVtx;
+					commonVerts++;
+					if(commonVerts == portalVerts.length) return commonVerts;
+				}
+			}
+		}
 
-		return false;
+		return commonVerts;
 	}
+	
+	private static void setPortalRooms(Portal p, Room room1, Room room2) {
+		if(room1 == null && room2 == null) return;
+		/*Vector3D pCenter = p.getCenter();
+		Vector3D pNormal = p.getNormal();
+		
+		int res = calculateRoomPortalDirection(room1, pCenter, pNormal);
+		int room1Front = res & 0xff, room1Back = (res >> 8) & 0xff;
+		
+		res = calculateRoomPortalDirection(room2, pCenter, pNormal);
+		int room2Front = res & 0xff, room2Back = (res >> 8) & 0xff;
+		
+		if(Math.max(room1Front, room1Back) > Math.max(room2Front, room2Back)) {
+			if(room1Back > room1Front) {
+				Room tmp = room2;
+				room2 = room1;
+				room1 = tmp;
+			}
+		} else {
+			if(room2Front > room2Back) {
+				Room tmp = room2;
+				room2 = room1;
+				room1 = tmp;
+			}
+		}*/
+		
+		Vector3D tmpVec = new Vector3D();
+		float room1Size = Float.POSITIVE_INFINITY, room2Size = Float.POSITIVE_INFINITY;
+		
+		if(room1 != null) {
+			tmpVec.set(room1.getMesh().getAABBMax());
+			tmpVec.sub(room1.getMesh().getAABBMin());
+			room1Size = (float) tmpVec.x * tmpVec.y * tmpVec.z;
+		}
+		
+		if(room2 != null) {
+			tmpVec.set(room2.getMesh().getAABBMax());
+			tmpVec.sub(room2.getMesh().getAABBMin());
+			room2Size = (float) tmpVec.x * tmpVec.y * tmpVec.z;
+		}
+		
+		if(room1Size < room2Size) {
+			tmpVec.set(room1.getMesh().getAABBMin());
+			tmpVec.add(room1.getMesh().getAABBMax());
+			tmpVec.x /= 2;
+			tmpVec.y /= 2;
+			tmpVec.z /= 2;
+			
+			tmpVec.sub(p.getCenter());
+			int dot = tmpVec.dot(p.getNormal());
+			
+			//Make first room back room
+			if(dot < 0) {
+				Room tmp = room2;
+				room2 = room1;
+				room1 = tmp;
+			}
+		} else {
+			tmpVec.set(room2.getMesh().getAABBMin());
+			tmpVec.add(room2.getMesh().getAABBMax());
+			tmpVec.x /= 2;
+			tmpVec.y /= 2;
+			tmpVec.z /= 2;
+			
+			tmpVec.sub(p.getCenter());
+			int dot = tmpVec.dot(p.getNormal());
+			
+			//Make second room front room
+			if(dot > 0) {
+				Room tmp = room2;
+				room2 = room1;
+				room1 = tmp;
+			}
+		}
+		
+		p.setRooms(room1, room2);
+	}
+	
+	/*private static int calculateRoomPortalDirection(Room room, Vector3D pCenter, Vector3D pNormal) {
+		if(room == null) return 0;
+		
+		//Select 8 points at the room border and one point at the room center
+		//And check which points are in front of the portal or at the back
+		Vector3D aabbMin = room.getMesh().getAABBMin();
+		Vector3D aabbMax = room.getMesh().getAABBMax();
+		
+		Vector3D tmpVec = new Vector3D();
+		int roomFrontVtx = 0, roomBackVtx = 0;
+		
+		for(int i = 0; i < 9; i++) {
+			tmpVec.set(
+				(((i & 1) > 0) ? aabbMax : aabbMin).x,
+				(((i & 2) > 0) ? aabbMax : aabbMin).y, 
+				(((i & 4) > 0) ? aabbMax : aabbMin).z
+				);
+			
+			if(i == 8) {
+				tmpVec.set(aabbMin);
+				tmpVec.add(aabbMax);
+				tmpVec.x /= 2;
+				tmpVec.y /= 2;
+				tmpVec.z /= 2;
+			}
+			
+			tmpVec.sub(pCenter);
+			int dot = tmpVec.dot(pNormal);
+			
+			if(dot > 0) roomFrontVtx++;
+			else if(dot < 0) roomBackVtx++;
+		}
+		
+		return roomFrontVtx | (roomBackVtx << 8);
+	}*/
 }

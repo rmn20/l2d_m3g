@@ -10,45 +10,54 @@ public final class SphereCast {
 			c = new Vector3D(), d = new Vector3D();
 
 	public static boolean sphereCast(MeshData mesh, Vector3D pos, int rad) {
-		short[] verts = mesh.getVertices();
+		short[] verts = mesh.getVerts();
 		
-		short[] p4v = mesh.get4VPols();
-		short[] p4vNorms = mesh.getP4VNorms();
+		short[] pols = mesh.getPols();
+		short[] norms = mesh.getNorms();
 		
-		short[] p3v = mesh.get3VPols();
-		short[] p3vNorms = mesh.getP3VNorms();
-		
-		int p4vCount = p4vNorms.length / 3;
-		int p3vCount = p3vNorms.length / 3;
+		int quadsCount = mesh.getQuadsCount();
+		int trisCount = mesh.getTrisCount();
 		
 		int meshScalefp8 = (int) (256 * mesh.getScale());
+		int meshOffsetX = (int) (mesh.getOffsetX() * mesh.getScale());
+		int meshOffsetY = (int) (mesh.getOffsetY() * mesh.getScale());
+		int meshOffsetZ = (int) (mesh.getOffsetZ() * mesh.getScale());
 		
 		boolean col = false;
 		
-		for(int vtxPerPoly = 4; vtxPerPoly >= 3; vtxPerPoly--) {
+		for(int vtxPerPoly = 4, pIdx = 0, nIdx = 0; vtxPerPoly >= 3; vtxPerPoly--) {
 			
-			short[] pols = vtxPerPoly == 4 ? p4v : p3v;
-			short[] norms = vtxPerPoly == 4 ? p4vNorms : p3vNorms;
-			int polysCount = vtxPerPoly == 4 ? p4vCount : p3vCount;
+			int pEnd = vtxPerPoly == 4 ? quadsCount * 4 : pols.length;
 			
-			for(int i = 0; i < polysCount; i++) {
-				int v1Index = pols[i * vtxPerPoly + 0];
-				int v2Index = pols[i * vtxPerPoly + 1];
-				int v3Index = pols[i * vtxPerPoly + 2];
+			for(; pIdx < pEnd; pIdx += vtxPerPoly, nIdx += 3) {
+				int v1Index = pols[pIdx + 0];
+				int v2Index = pols[pIdx + 1];
+				int v3Index = pols[pIdx + 2];
 
-				final int 
+				int 
 						ax = (verts[v1Index * 3 + 0] * meshScalefp8) >> 8, 
 						ay = (verts[v1Index * 3 + 1] * meshScalefp8) >> 8, 
 						az = (verts[v1Index * 3 + 2] * meshScalefp8) >> 8;
-				final int 
+				ax += meshOffsetX;
+				ay += meshOffsetY;
+				az += meshOffsetZ;
+				
+				int 
 						bx = (verts[v2Index * 3 + 0] * meshScalefp8) >> 8, 
 						by = (verts[v2Index * 3 + 1] * meshScalefp8) >> 8, 
 						bz = (verts[v2Index * 3 + 2] * meshScalefp8) >> 8;
-				final int 
+				bx += meshOffsetX;
+				by += meshOffsetY;
+				bz += meshOffsetZ;
+				
+				int 
 						cx = (verts[v3Index * 3 + 0] * meshScalefp8) >> 8, 
 						cy = (verts[v3Index * 3 + 1] * meshScalefp8) >> 8, 
 						cz = (verts[v3Index * 3 + 2] * meshScalefp8) >> 8;
-
+				cx += meshOffsetX;
+				cy += meshOffsetY;
+				cz += meshOffsetZ;
+				
 				int maxx = ax;
 				if(bx > maxx) maxx = bx;
 				if(cx > maxx) maxx = cx;
@@ -76,11 +85,15 @@ public final class SphereCast {
 				int dx = 0, dy = 0, dz = 0;
 				
 				if(vtxPerPoly == 4) {
-					int v4Index = pols[i * vtxPerPoly + 3];
+					int v4Index = pols[pIdx + 3];
 
 					dx = (verts[v4Index * 3 + 0] * meshScalefp8) >> 8;
 					dy = (verts[v4Index * 3 + 1] * meshScalefp8) >> 8; 
 					dz = (verts[v4Index * 3 + 2] * meshScalefp8) >> 8;
+					
+					dx += meshOffsetX;
+					dy += meshOffsetY;
+					dz += meshOffsetZ;
 					
 					if(dx > maxx) maxx = dx;
 					if(dx < minx) minx = dx;
@@ -97,9 +110,9 @@ public final class SphereCast {
 				if(maxy < pos.y - rad) continue;
 				if(miny > pos.y + rad) continue;
 				
-				nor.x = norms[i * 3];
-				nor.y = norms[i * 3 + 1];
-				nor.z = norms[i * 3 + 2];
+				nor.x = norms[nIdx];
+				nor.y = norms[nIdx + 1];
+				nor.z = norms[nIdx + 2];
 
 				a.set(ax, ay, az);
 				b.set(bx, by, bz);
@@ -121,6 +134,7 @@ public final class SphereCast {
 				}
 			}
 		}
+		
 		return col;
 	}
 

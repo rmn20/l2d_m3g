@@ -20,7 +20,7 @@ public class Respawn {
 
 		float scale = (ini = IniFile.createFromResource(file)).getFloat("WORLD_SCALE");
 		Texture tex = Texture.createTexture(ini.getString("WORLD_TEXTURE"));
-		MeshData[] meshes = MeshData.loadMeshes(ini.getString("WORLD_MODEL"), scale, tex.w, false, true);
+		MeshData[] meshes = MeshData.loadMeshes3D2(ini.getString("WORLD_MODEL"), tex.img, scale, false, true);
 		String skyModel = ini.getString("SKYBOX_MODEL");
 
 		String skyTex = ini.getString("SKYBOX_TEXTURE");
@@ -30,7 +30,6 @@ public class Respawn {
 		}
 
 		House var13 = HouseCreator.create(meshes);
-		var13.setTexture(tex);
 		Respawn var14 = readPoints(ini.getString("START"), var13)[0];
 		Respawn var15 = readPoints(ini.getString("FINISH"), var13)[0];
 		Respawn[] var16 = readPoints(ini.getString("ENEMIES"), var13);

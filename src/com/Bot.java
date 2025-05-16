@@ -99,8 +99,8 @@ public abstract class Bot extends GameObject {
 		for(int i = 0; i < portals.length; i++) {
 			Portal portal = portals[i];
 			
-			int pRoom1Id = portal.getRoom1().getId();
-			int pRoom2Id = portal.getRoom2().getId();
+			int pRoom1Id = portal.getRoomFront().getId();
+			int pRoom2Id = portal.getRoomBack().getId();
 			
 			if(pRoom1Id == room2 || pRoom2Id == room2) {
 				return portal;
@@ -108,26 +108,6 @@ public abstract class Bot extends GameObject {
 		}
 
 		return null;
-	}
-
-	protected static void computePortalCentre(Portal portal, Vector3D vec) {
-		int x = 0, y = 0, z = 0;
-
-		Vector3D[] verts = portal.getVertices();
-		
-		for(int i = 0; i < verts.length; i++) {
-			Vector3D v = verts[i];
-			
-			x += v.x;
-			y += v.y;
-			z += v.z;
-		}
-
-		x /= verts.length;
-		y /= verts.length;
-		z /= verts.length;
-		
-		vec.set(x, y, z);
 	}
 
 	protected static Player find(Vector objs) {

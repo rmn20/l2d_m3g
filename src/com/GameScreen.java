@@ -59,7 +59,7 @@ public final class GameScreen extends Canvas {
 			this.imgSkull = this.createImage("/skull.png");
 			this.scene = Respawn.createScene(this.width, (int) ((float) this.height / 1.25F * ((float) main.getDisplaySize() / 100.0F)), levelFile);
 			if(this.scene.getHouse().getSkybox() != null) {
-				this.scene.getHouse().getSkybox().setAnimation(true);
+				//this.scene.getHouse().getSkybox().setAnimation(true);
 			}
 
 			this.player = new Player(this.scene.getG3D().getWidth(), this.scene.getG3D().getHeight(), this.scene.getStartPoint(), this.hudInfo);
