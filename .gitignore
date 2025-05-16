@@ -1,3 +1,5 @@
 /build/
 /dist/
 private/
+/ModelConverter/dist/
+/ModelConverter/build/
