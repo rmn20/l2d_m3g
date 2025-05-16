@@ -73,45 +73,14 @@ public class Exporter3D2 {
 	private static final void writeAttribute(
 		DataOutputStream dos, 
 		ArrayList<Vertex> verts,
-		ArrayList<Vector3i> uniqAtts, 
 		int attributeId,
 		int dims, 
 		boolean useShortX,
 		boolean useShortY,
 		boolean useShortZ
 	) throws IOException {
-		//Select how to store vertex attribute data, indexed or not
-		int elementSize = 
-			(useShortX?2:1) + 
-			(dims>=2 ? (useShortY?2:1) : 0) + 
-			(dims>=3 ? (useShortZ?2:1) : 0);
-		
-		int sizeNaive = elementSize * verts.size();
-		int sizeIndexed = elementSize * uniqAtts.size() + 
-			verts.size() * (uniqAtts.size() > 256 ? 2 : 1);
-		
-		boolean useIndexing = sizeIndexed < sizeNaive;
-		int sizeTotal = useIndexing ? sizeIndexed : sizeNaive;
-		
-		//Write attribute data
-		if(useIndexing) dos.writeShort(uniqAtts.size());
-		else dos.writeShort(0);
-		
-		if(attributeId == Mesh.POS) statPosSize += sizeTotal;
-		if(attributeId == Mesh.NORM) statNormSize += sizeTotal;
-		if(attributeId == Mesh.UV) statUVSize += sizeTotal;
-		if(attributeId == Mesh.COL) statColSize += sizeTotal;
-		
-		int dataCount = useIndexing ? uniqAtts.size() : verts.size();
-		
-		for(int i = 0; i < dataCount; i++) {
-			Vector3i v;
-			
-			if(useIndexing) {
-				v = uniqAtts.get(i);
-			} else {
-				v = verts.get(i).atts[attributeId];
-			}
+		for(int i = 0; i < verts.size(); i++) {
+			Vector3i v = verts.get(i).atts[attributeId];
 			
 			if(useShortX) dos.writeShort(v.x);
 			else dos.writeByte(v.x);
@@ -127,27 +96,28 @@ public class Exporter3D2 {
 			}
 		}
 		
-		//Write attribute index for each vertex, if indexing is used
-		if(useIndexing) {
-			for(int i = 0; i < verts.size(); i++) {
-				Vertex v = verts.get(i);
-				int idx = v.attIdx[attributeId];
-
-				if(uniqAtts.size() <= 256) dos.writeByte(idx);
-				else dos.writeShort(idx);
-			}
-		}
+		//Stats
+		int elementSize = 
+			(useShortX?2:1) + 
+			(dims>=2 ? (useShortY?2:1) : 0) + 
+			(dims>=3 ? (useShortZ?2:1) : 0);
+		
+		int sizeNaive = elementSize * verts.size();
+		
+		if(attributeId == Mesh.POS) statPosSize += sizeNaive;
+		if(attributeId == Mesh.NORM) statNormSize += sizeNaive;
+		if(attributeId == Mesh.UV) statUVSize += sizeNaive;
+		if(attributeId == Mesh.COL) statColSize += sizeNaive;
 	}
 	
 	private static final void writeAttribute(
 		DataOutputStream dos, 
 		ArrayList<Vertex> verts,
-		ArrayList<Vector3i> uniqAtts, 
 		int attributeId,
 		int dims, 
 		boolean useShort
 	) throws IOException {
-		writeAttribute(dos, verts, uniqAtts, attributeId, dims, useShort, useShort, useShort);
+		writeAttribute(dos, verts, attributeId, dims, useShort, useShort, useShort);
 	}
 	
 	public static final void exportMesh(DataOutputStream dos, Mesh mesh) throws IOException {
@@ -169,7 +139,7 @@ public class Exporter3D2 {
 		if(hasUVs) {
 			uvXInBytes = uvMax.x - uvMin.x < 256;
 			uvYInBytes = uvMax.y - uvMin.y < 256;
-			uvInBytes = uvXInBytes | uvYInBytes;
+			uvInBytes = uvXInBytes || uvYInBytes;
 		}
 		
 		int flags = 0;
@@ -196,7 +166,6 @@ public class Exporter3D2 {
 		boolean posXInBytes = (posMax.x - posMin.x) < 256;
 		boolean posYInBytes = (posMax.y - posMin.y) < 256;
 		boolean posZInBytes = (posMax.z - posMin.z) < 256;
-		//boolean posInBytes = posXInBytes | posYInBytes | posZInBytes;
 		
 		Vector3i posOffset = new Vector3i(0);
 		if(posXInBytes) posOffset.x = posMin.x + 128;
@@ -251,10 +220,10 @@ public class Exporter3D2 {
 		//Write all vertex attributes
 		dos.writeShort(verts.size());
 		
-		writeAttribute(dos, verts, uniquePoses, Mesh.POS, 3, !posXInBytes, !posYInBytes, !posZInBytes);
-		if(hasNorms) writeAttribute(dos, verts, uniqueNorms, Mesh.NORM, 3, false);
-		if(hasUVs) writeAttribute(dos, verts, uniqueUVs, Mesh.UV, 2, !uvXInBytes, !uvYInBytes, false);
-		if(hasCols) writeAttribute(dos, verts, uniqueCols, Mesh.COL, 3, false);
+		writeAttribute(dos, verts, Mesh.POS, 3, !posXInBytes, !posYInBytes, !posZInBytes);
+		if(hasNorms) writeAttribute(dos, verts, Mesh.NORM, 3, false);
+		if(hasUVs) writeAttribute(dos, verts, Mesh.UV, 2, !uvXInBytes, !uvYInBytes, false);
+		if(hasCols) writeAttribute(dos, verts, Mesh.COL, 3, false);
 		
 		//Write polygonal data
 		int totalQuads = 0, totalTris = 0;

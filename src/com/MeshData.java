@@ -474,18 +474,14 @@ public class MeshData {
 			short[] dataOnCpu
 			) throws IOException {
 		//Create temporary data array
-		int dataCount = dis.readUnsignedShort();
-		boolean useIndexing = dataCount > 0;
-		if(!useIndexing) dataCount = vtxCount;
-		
 		short dataShort[] = null;
 		byte dataBytes[] = null;
 		
-		if(xInBytes && yInBytes && zInBytes) dataBytes = new byte[dataCount * dims];
-		else dataShort = new short[dataCount * dims];
+		if(xInBytes && yInBytes && zInBytes) dataBytes = new byte[vtxCount * dims];
+		else dataShort = new short[vtxCount * dims];
 		
 		//Load attribute data
-		for(int i = 0; i < dataCount; i++) {
+		for(int i = 0; i < vtxCount; i++) {
 			int x = 0, y = 0, z = 0;
 			
 			x = xInBytes ? dis.readByte() : dis.readShort();
@@ -501,31 +497,6 @@ public class MeshData {
 				if(dims >= 2) dataShort[i * dims + 1] = (short) y;
 				if(dims >= 3) dataShort[i * dims + 2] = (short) z;
 			}
-		}
-		
-		//Fill vertex data with loaded attribute data if indexing is used
-		if(useIndexing) {
-			short newDataShort[] = null;
-			byte newDataBytes[] = null;
-		
-			if(dataBytes != null) newDataBytes = new byte[vtxCount * dims];
-			else newDataShort = new short[vtxCount * dims];
-			
-			for(int i = 0; i < vtxCount; i++) {
-				int idx;
-				
-				if(dataCount <= 256) idx = dis.readUnsignedByte();
-				else idx = dis.readUnsignedShort();
-			
-				if(dataBytes != null) {
-					System.arraycopy(dataBytes, idx * dims, newDataBytes, i * dims, dims);
-				} else {
-					System.arraycopy(dataShort, idx * dims, newDataShort, i * dims, dims);
-				}
-			}
-			
-			dataShort = newDataShort;
-			dataBytes = newDataBytes;
 		}
 		
 		//Fill additional on-cpu data array
