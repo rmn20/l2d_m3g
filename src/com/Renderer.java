@@ -13,6 +13,7 @@ public final class Renderer {
 	private final Background bck = new Background();
 	
 	public final Vector3D camPos = new Vector3D();
+	public final Vector3D camRot = new Vector3D();
 	private final Camera cam = new Camera();
 	private final Transform camPers = new Transform();
 	private final float[] camPersTmp = new float[16], camPersTmp2 = new float[16];
@@ -78,6 +79,7 @@ public final class Renderer {
 
 	public final void setCamera(Vector3D pos, Vector3D rot) {
 		camPos.set(pos);
+		camRot.set(rot);
 		
 		camTrans.setIdentity();
 		camTrans.postTranslate(pos.x, pos.y, pos.z);
