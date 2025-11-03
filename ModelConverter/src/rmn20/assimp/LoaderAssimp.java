@@ -2,6 +2,7 @@ package rmn20.assimp;
 
 import java.nio.IntBuffer;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.assimp.AIBone;
 import org.lwjgl.assimp.AIColor4D;
 import org.lwjgl.assimp.AIFace;
 import org.lwjgl.assimp.AIMesh;
@@ -28,9 +29,12 @@ public class LoaderAssimp {
 			aiProcess_FindInvalidData |
 			aiProcess_GenUVCoords |
 			aiProcess_TransformUVCoords |
-			aiProcess_FlipUVs;
+			aiProcess_FlipUVs |
+			aiProcess_PopulateArmatureData |
 			//aiProcess_Triangulate |
-			//aiProcess_SortByPType;
+			//aiProcess_SortByPType |
+			0
+			;
 					
 		if(dropNormals) {
 			loadFlags |= aiProcess_DropNormals;
@@ -47,6 +51,8 @@ public class LoaderAssimp {
 
 		AIModelData model = new AIModelData();
 		processAINode(model, scene, scene.mRootNode());
+		
+		System.out.println("Animations count: " + scene.mNumAnimations());
 
 		aiReleasePropertyStore(propStore);
 		
@@ -80,6 +86,7 @@ public class LoaderAssimp {
 	private static AISubMeshData createSubMesh(AIMeshData mdlMesh, AIMesh aiMesh) {
 		if((aiMesh.mPrimitiveTypes() & (aiPrimitiveType_TRIANGLE | aiPrimitiveType_POLYGON)) == 0) return null;
 		
+		//Create submesh with all vertices
 		AIVector3D.Buffer verts = aiMesh.mVertices();
 		AIVector3D.Buffer norms = aiMesh.mNormals();
 		AIVector3D.Buffer uvs = aiMesh.mTextureCoords(0);
@@ -94,6 +101,18 @@ public class LoaderAssimp {
 			aiMesh.mNumVertices()
 		);
 		
+		//Add bones
+		PointerBuffer bones = aiMesh.mBones();
+		int numBones = aiMesh.mNumBones();
+		
+		for(int i = 0; i < numBones; i++) {
+			AIBone bone = AIBone.create(bones.get(i));
+			int boneId = mdlMesh.getBoneId(bone);
+			
+			asMesh.addBone(bone, boneId);
+		}
+		
+		//Add faces
 		AIFace.Buffer faces = aiMesh.mFaces();
 		int numFaces = aiMesh.mNumFaces();
 		

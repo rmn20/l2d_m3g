@@ -1,6 +1,7 @@
 package rmn20.m3d2;
 
 import java.util.ArrayList;
+import rmn20.assimp.AIBoneData;
 import rmn20.assimp.AIMeshData;
 import rmn20.assimp.AISubMeshData;
 
@@ -16,6 +17,8 @@ public class Mesh {
 	
 	public ArrayList<Vertex> verts = new ArrayList<>();
 	public ArrayList<SubMesh> submeshes = new ArrayList<>();
+	
+	public ArrayList<Bone> bones = new ArrayList<>();
 	
 	public boolean hasNorms, hasUVs, hasCols;
 	
@@ -33,6 +36,19 @@ public class Mesh {
 		for(AISubMeshData inSubmesh : inMesh.submeshes) {
 			SubMesh submesh = new SubMesh(inSubmesh, this);
 			addSubMesh(submesh);
+		}
+		
+		if(inMesh.bones.size() > 254) throw new Error("Too much bones in mesh " + name);
+		
+		for(AIBoneData bone : inMesh.bones) {
+			Bone boneData = new Bone(bone);
+			
+			Bone parent = null;
+			if(boneData.parent != -1) parent = bones.get(boneData.parent);
+			
+			boneData.calcMatrices(parent);
+			
+			bones.add(boneData);
 		}
 	}
 	

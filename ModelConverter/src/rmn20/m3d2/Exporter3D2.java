@@ -11,10 +11,13 @@ import java.util.ArrayList;
 public class Exporter3D2 {
 	
 	public static int 
-		statPosSize, statNormSize, statUVSize, statColSize, statIndicesSize;
+		statPosSize, statNormSize, statUVSize, statColSize, 
+		statBonesSize,
+		statIndicesSize;
 	
 	public static final void exportModel(DataOutputStream dos, Model mdl) throws IOException {
 		statPosSize = statNormSize = statUVSize = statColSize = statIndicesSize = 0;
+		statBonesSize = 0;
 		
 		dos.writeBytes("3D2\0");
 		dos.writeShort(0); //Format version
@@ -46,6 +49,7 @@ public class Exporter3D2 {
 		System.out.printf("Norm data size: %.1f kb\n", statNormSize / 1024f);
 		System.out.printf("UV   data size: %.1f kb\n", statUVSize / 1024f);
 		System.out.printf("Col  data size: %.1f kb\n", statColSize / 1024f);
+		System.out.printf("Bones data size: %.1f kb\n", statBonesSize / 1024f);
 		System.out.printf("PIdx data size: %.1f kb\n", statIndicesSize / 1024f);
 	}
 	
@@ -135,6 +139,7 @@ public class Exporter3D2 {
 		
 		//Write flags
 		boolean uvXInBytes = false, uvYInBytes = false, uvInBytes = false;
+		boolean hasBones = !mesh.bones.isEmpty();
 		
 		if(hasUVs) {
 			uvXInBytes = uvMax.x - uvMin.x < 256;
@@ -150,6 +155,8 @@ public class Exporter3D2 {
 		
 		flags |= uvXInBytes ? 8 : 0;
 		flags |= uvYInBytes ? 16 : 0;
+		
+		flags |= hasBones ? 32 : 0;
 		
 		dos.writeInt(flags);
 		
@@ -200,6 +207,21 @@ public class Exporter3D2 {
 				v.x -= uvOffset.x;
 				v.y -= uvOffset.y;
 			}
+		}
+		
+		//Write bones
+		if(hasBones) {
+			dos.writeByte(mesh.bones.size());
+
+			for(Bone bone : mesh.bones) {
+				dos.writeByte(bone.parent);
+
+				for(int i = 0; i < 16; i++) {
+					dos.writeFloat(bone.matrix[i]);
+				}
+			}
+			
+			statBonesSize += 1 + mesh.bones.size() * (1 + 16 * 4);
 		}
 		
 		//Calculate lists of unique attributes
@@ -289,6 +311,20 @@ public class Exporter3D2 {
 				v.y += uvOffset.y;
 			}
 		}
+		
+		//Write bones weights
+		if(hasBones) {
+			for(int i = 0; i < verts.size(); i++) {
+				Vertex v = verts.get(i);
+				
+				/*for(int w = 0; w < v.bones.size(); w++) {
+					
+				}*/
+				if(v.bones.isEmpty()) dos.writeByte(255);
+				else dos.writeByte(v.bones.get(0).boneId);
+			}
+		}
+		
 		
 		System.out.printf(
 			"\n\"%s\" mesh stats:\n" + 

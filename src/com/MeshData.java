@@ -7,10 +7,13 @@ import java.util.Vector;
 import javax.microedition.m3g.Appearance;
 import javax.microedition.m3g.CompositingMode;
 import javax.microedition.m3g.Fog;
+import javax.microedition.m3g.Group;
 import javax.microedition.m3g.Image2D;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.PolygonMode;
+import javax.microedition.m3g.SkinnedMesh;
 import javax.microedition.m3g.Texture2D;
+import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
@@ -277,6 +280,7 @@ public class MeshData {
 				meshes[i] = loadMesh3D2(
 					dis, 
 					img,
+					scale,
 					scale / posScale,
 					1f / uvScale,
 					persCorrection
@@ -306,6 +310,7 @@ public class MeshData {
 	private static MeshData loadMesh3D2(
 			DataInputStream dis,
 			Image2D img, 
+			float mdlScale,
 			float scale, 
 			float uvScale,
 			boolean persCorrection
@@ -319,6 +324,8 @@ public class MeshData {
 		
 		boolean uvXInBytes = (meshFlags & 8) != 0;
 		boolean uvYInBytes = (meshFlags & 16) != 0;
+		
+		boolean hasBones = (meshFlags & 32) != 0;
 		
 		//Load mesh AABB
 		Vector3D aabbMin = new Vector3D(dis.readShort(), dis.readShort(), dis.readShort());
@@ -336,6 +343,46 @@ public class MeshData {
 		int uvOffsetX = 0, uvOffsetY = 0;
 		if(uvXInBytes) uvOffsetX = dis.readShort() + 128;
 		if(uvYInBytes) uvOffsetY = dis.readShort() + 128;
+		
+		//Load bones data
+		Group armature = null;
+		Group[] bonesList = null;
+		
+		if(hasBones) {
+			armature = new Group();
+			
+			int bonesCount = dis.readUnsignedByte();
+			bonesList = new Group[bonesCount];
+			
+			for(int i = 0; i < bonesCount; i++) {
+				Group bone = new Group();
+				bonesList[i] = bone;
+				
+				int parentId = dis.readUnsignedByte();
+				
+				if(parentId == 255) armature.addChild(bone);
+				else bonesList[parentId].addChild(bone);
+			
+				float[] mat = new float[16];
+				for(int x = 0; x < 16; x++) {
+					mat[x] = dis.readFloat();
+				}
+				
+				bone.setTranslation(mat[3], mat[7], mat[11]);
+				mat[3] = mat[7] = mat[11] = 0;
+				
+				Transform trans = new Transform();
+				trans.set(mat);
+				bone.setTransform(trans);
+			}
+			
+			if(armature.getChildCount() == 1) {
+				armature.removeChild(bonesList[0]);
+				armature = bonesList[0];
+			}
+			
+			armature.setScale(mdlScale, mdlScale, mdlScale);
+		}
 		
 		//Load vertex data
 		int vtxCount = dis.readUnsignedShort();
@@ -451,7 +498,22 @@ public class MeshData {
 		aabbMax.y = (int) (aabbMax.y * scale);
 		aabbMax.z = (int) (aabbMax.z * scale);
 		
-		Mesh m3gMesh = new Mesh(vb, submeshes, ap);
+		Mesh m3gMesh;
+		
+		if(!hasBones) {
+			m3gMesh = new Mesh(vb, submeshes, ap);
+		} else {
+			SkinnedMesh skinMesh = new SkinnedMesh(vb, submeshes, ap, armature);
+			m3gMesh = skinMesh;
+			
+			for(int i = 0; i < vtxCount; i++) {
+				int boneId = dis.readUnsignedByte();
+				if(boneId == 255) continue;
+				
+				skinMesh.addTransform(bonesList[boneId], 1, i, 1);
+			}
+		}
+		
 		MeshData mesh = new MeshData(m3gMesh, aabbMin, aabbMax);
 		
 		mesh.setPhysicsData(

@@ -2,9 +2,11 @@ package rmn20.assimp;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import org.lwjgl.assimp.AIBone;
 import org.lwjgl.assimp.AIColor4D;
 import org.lwjgl.assimp.AIFace;
 import org.lwjgl.assimp.AIVector3D;
+import org.lwjgl.assimp.AIVertexWeight;
 
 /**
  *
@@ -65,6 +67,16 @@ public class AISubMeshData {
 			quads.add(b);
 			quads.add(d);
 			quads.add(c);
+		}
+	}
+	
+	public void addBone(AIBone bone, int boneId) {
+		int numWeights = bone.mNumWeights();
+		AIVertexWeight.Buffer weights = bone.mWeights();
+		
+		for(int i = 0; i < numWeights; i++) {
+			AIVertexWeight weight = weights.get(i);
+			verts.get(weight.mVertexId()).addBoneWeight(boneId, weight.mWeight());
 		}
 	}
 	
