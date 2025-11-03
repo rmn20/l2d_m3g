@@ -506,11 +506,17 @@ public class MeshData {
 			SkinnedMesh skinMesh = new SkinnedMesh(vb, submeshes, ap, armature);
 			m3gMesh = skinMesh;
 			
+			int maxBonesPerVtx = dis.readUnsignedByte();
+			
 			for(int i = 0; i < vtxCount; i++) {
-				int boneId = dis.readUnsignedByte();
-				if(boneId == 255) continue;
-				
-				skinMesh.addTransform(bonesList[boneId], 1, i, 1);
+				for(int w = 0; w < maxBonesPerVtx; w++) {
+					int boneId = dis.readUnsignedByte();
+					if(boneId == 255) break;
+					
+					int weight = maxBonesPerVtx > 1 ? dis.readUnsignedByte() : 1;
+
+					skinMesh.addTransform(bonesList[boneId], weight, i, 1);
+				}
 			}
 		}
 		

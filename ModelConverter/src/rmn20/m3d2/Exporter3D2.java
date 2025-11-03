@@ -225,6 +225,7 @@ public class Exporter3D2 {
 		}
 		
 		//Calculate lists of unique attributes
+		//Unused?
 		ArrayList<Vector3i> uniquePoses = new ArrayList<>();
 		ArrayList<Vector3i> uniqueNorms = new ArrayList<>();
 		ArrayList<Vector3i> uniqueUVs = new ArrayList<>();
@@ -313,22 +314,36 @@ public class Exporter3D2 {
 		}
 		
 		//Write bones weights
+		int maxBonesPerVtx = 0;
 		if(hasBones) {
 			for(int i = 0; i < verts.size(); i++) {
 				Vertex v = verts.get(i);
+				maxBonesPerVtx = Math.max(v.bones.size(), maxBonesPerVtx);
+			}
+			
+			dos.writeByte(maxBonesPerVtx);
+			statBonesSize++;
+			
+			for(int i = 0; i < verts.size(); i++) {
+				Vertex v = verts.get(i);
 				
-				/*for(int w = 0; w < v.bones.size(); w++) {
+				for(int w = 0; w < maxBonesPerVtx; w++) {
+					if(w >= v.bones.size()) {
+						dos.writeByte(255);
+						break;
+					}
 					
-				}*/
-				if(v.bones.isEmpty()) dos.writeByte(255);
-				else dos.writeByte(v.bones.get(0).boneId);
+					dos.writeByte(v.bones.get(0).boneId);
+					if(maxBonesPerVtx > 1) dos.writeByte(v.bones.get(0).weight);
+				}
 			}
 		}
-		
 		
 		System.out.printf(
 			"\n\"%s\" mesh stats:\n" + 
 			"hasNorms: %b\nhasUVs: %b\nhasCols: %b\n" +
+			"Bones: %d\n" + 
+			"Max bones per vtx: %d\n" + 
 			"Quads: %d\n" + 
 			"Tris: %d\n" + 
 			"Verts: %d\n" + 
@@ -341,6 +356,8 @@ public class Exporter3D2 {
 			
 			mesh.name,
 			hasNorms, hasUVs, hasCols,
+			mesh.bones.size(),
+			maxBonesPerVtx,
 			totalQuads,
 			totalTris,
 			verts.size(),

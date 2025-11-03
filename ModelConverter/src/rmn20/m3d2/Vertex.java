@@ -37,7 +37,7 @@ public class Vertex {
 		
 		if(!v.weights.isEmpty()) {
 			for(BoneWeightf weight : v.weights) {
-				int quantWeight = Math.round(weight.weight * 255 / v.maxWeight);
+				int quantWeight = Math.min(255, Math.round(weight.weight * 255 / v.maxWeight));
 				if(quantWeight <= 0) break;
 				
 				bones.add(new BoneWeighti(weight.boneId, quantWeight));
