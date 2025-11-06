@@ -25,6 +25,8 @@ public class Main {
 		for(int i = 0; i < args.length; i++) {
 			String arg = args[i];
 			
+			//todo add flags to change pos and uv precision
+			//todo add flag to change max bone count 
 			if(arg.startsWith("-")) {
 				if(arg.equals("-dropnormals")) dropNormals = true;
 			}

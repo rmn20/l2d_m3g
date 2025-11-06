@@ -330,11 +330,17 @@ public class Exporter3D2 {
 				for(int w = 0; w < maxBonesPerVtx; w++) {
 					if(w >= v.bones.size()) {
 						dos.writeByte(255);
+						statBonesSize++;
 						break;
 					}
 					
 					dos.writeByte(v.bones.get(0).boneId);
-					if(maxBonesPerVtx > 1) dos.writeByte(v.bones.get(0).weight);
+					statBonesSize++;
+					
+					if(maxBonesPerVtx > 1) {
+						dos.writeByte(v.bones.get(0).weight);
+						statBonesSize++;
+					}
 				}
 			}
 		}
