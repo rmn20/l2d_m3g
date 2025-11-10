@@ -12,4 +12,14 @@ public class BoneWeighti {
 		this.boneId = boneId;
 		this.weight = weight;
 	}
+	
+	public boolean equals(Object o) {
+		if(o instanceof BoneWeighti) {
+			BoneWeighti b = (BoneWeighti) o;
+			
+			return boneId == b.boneId && weight == b.weight;
+		}
+		
+		return super.equals(o);
+	}
 }
