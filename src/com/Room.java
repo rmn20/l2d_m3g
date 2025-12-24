@@ -10,6 +10,7 @@ public class Room {
 
 	private final int id;
 	private MeshData mesh;
+	private Group physGroup;
 	private final int minx, maxx, miny, maxy, minz, maxz; //room size
 	private boolean openSky;
 	
@@ -34,23 +35,21 @@ public class Room {
 		this.openSky = true;
 		
 		Mesh m3gMesh = mesh.getM3GMesh();
+		physGroup = new Group();
 		
 		if(m3gMesh != null) {
 			m3gMesh.setUserID(id);
 
-			Group tmpGroup = new Group();
-			tmpGroup.addChild(m3gMesh);
+			physGroup.addChild(m3gMesh);
 			
 			PolygonMode pm = m3gMesh.getAppearance(0).getPolygonMode();
 			int oldCulling = pm.getCulling();
 			pm.setCulling(PolygonMode.CULL_NONE);
 
 			RayIntersection ri = new RayIntersection();
-			boolean hit = tmpGroup.pick(-1, centerX, maxy + 1, centerZ, 0, -1, 0, ri);
+			boolean hit = physGroup.pick(-1, centerX, maxy + 1, centerZ, 0, -1, 0, ri);
 			
 			pm.setCulling(oldCulling);
-			
-			tmpGroup.removeChild(m3gMesh);
 
 			if(hit && ri.getNormalY() < 0.5) openSky = false;
 		}
@@ -72,6 +71,10 @@ public class Room {
 
 	public final MeshData getMesh() {
 		return this.mesh;
+	}
+
+	public final Group getGroup() {
+		return this.physGroup;
 	}
 
 	public final int getId() {

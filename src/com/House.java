@@ -17,7 +17,6 @@ public final class House {
 	private Vector objects = new Vector(); // из Room
 	
 	private final RayIntersection ri = new RayIntersection();
-	private Group physGroup = new Group();
 
 	public House(Room[] rooms, Room[][] neighbours, Portal[] portals) {
 		this.rooms = rooms;
@@ -110,24 +109,27 @@ public final class House {
 	}
 
 	public final void rayCast(int part, Ray ray) {
-		Vector nearRooms = getNearRooms(part);
-
-		for(int i = 0; i < nearRooms.size(); ++i) {
-			Room room = (Room) nearRooms.elementAt(i);
-			physGroup.addChild(room.getMesh().getM3GMesh());
-		}
 		
 		Vector3D rayStart = ray.start;
 		Vector3D rayDir = ray.dir;
 		
-		boolean hit = physGroup.pick(-1, rayStart.x, rayStart.y, rayStart.z, rayDir.x, rayDir.y, rayDir.z, ri);
+		boolean hit = false;
+		float d = Float.MAX_VALUE;
 
-		while(physGroup.getChildCount() > 0) {
-			physGroup.removeChild(physGroup.getChild(0));
+		Vector nearRooms = getNearRooms(part);
+		
+		for(int i = 0; i < nearRooms.size(); ++i) {
+			Room room = (Room) nearRooms.elementAt(i);
+			
+			boolean tmpHit = room.getGroup().pick(-1, rayStart.x, rayStart.y, rayStart.z, rayDir.x, rayDir.y, rayDir.z, ri);
+			
+			if(tmpHit) {
+				hit = true;
+				if(ri.getDistance() < d) d = ri.getDistance();
+			}
 		}
 		
 		if(hit) {
-			float d = ri.getDistance();
 			if(d > 1) return;
 			
 			ray.collision = true;
@@ -141,22 +143,24 @@ public final class House {
 
 	// ??? максимальное значение y дома (house), которое ниже точки (x,y,z)
 	public final int getFloorY(int part, int x, int y, int z) {
+		boolean hit = false;
+		float d = Float.MAX_VALUE;
+		
 		Vector nearRooms = getNearRooms(part);
 
 		for(int i = 0; i < nearRooms.size(); ++i) {
 			Room room = (Room) nearRooms.elementAt(i);
-			//room.rayCast(ray);
-			physGroup.addChild(room.getMesh().getM3GMesh());
-		}
-		
-		boolean hit = physGroup.pick(-1, x, y, z, 0, -1, 0, ri);
-
-		while(physGroup.getChildCount() > 0) {
-			physGroup.removeChild(physGroup.getChild(0));
+			
+			boolean tmpHit = room.getGroup().pick(-1, x, y, z, 0, -1, 0, ri);
+			
+			if(tmpHit) {
+				hit = true;
+				if(ri.getDistance() < d) d = ri.getDistance();
+			}
 		}
 		
 		//normal y < 0 is ignored due to back face culling
-		if(hit) return y - (int) ri.getDistance();
+		if(hit) return y - (int) d;
 		return Integer.MAX_VALUE;
 	}
 
@@ -322,13 +326,8 @@ public final class House {
 	//todo disable back face culling
 	public final int computePart(int oldPart, int x, int z) {
 		if(oldPart != -1) {
-			Group physGroup = this.physGroup;
 			Room oldRoom = rooms[oldPart];
-			
-			physGroup.addChild(oldRoom.getMesh().getM3GMesh());
-			boolean hit = physGroup.pick(-1, x, oldRoom.getMaxY() + 1, z, 0, -1, 0, ri);
-			physGroup.removeChild(physGroup.getChild(0));
-			
+			boolean hit = oldRoom.getGroup().pick(-1, x, oldRoom.getMaxY() + 1, z, 0, -1, 0, ri);
 			if(hit) return oldPart;
 
 			int newPart = computePartRoomsList(neighbours[oldPart], x, z);
@@ -340,24 +339,25 @@ public final class House {
 	}
 	
 	private final int computePartRoomsList(Room[] rooms, int x, int z) {
-		Group physGroup = this.physGroup;
-		int maxY = Integer.MIN_VALUE;
+		int newPart = -1;
+		float maxY = -Float.MAX_VALUE;
 		
 		for(int i = 0; i < rooms.length; i++) {
 			Room room = rooms[i];
-			Mesh mesh = room.getMesh().getM3GMesh();
-			if(mesh == null) continue; //todo WHY
-			physGroup.addChild(mesh);
-			if(room.getMaxY() > maxY) maxY = room.getMaxY();
+		
+			float startY = room.getMaxY() + 1;
+			boolean tmpHit = room.getGroup().pick(-1, x, startY, z, 0, -1, 0, ri);
+			
+			if(tmpHit) {
+				float hitY = startY - ri.getDistance();
+				
+				if(hitY > maxY) {
+					maxY = hitY;
+					newPart = i;
+				}
+			}
 		}
 		
-		boolean hit = physGroup.pick(-1, x, maxY + 1, z, 0, -1, 0, ri);
-		
-		while(physGroup.getChildCount() > 0) {
-			physGroup.removeChild(physGroup.getChild(0));
-		}
-		
-		if(hit) return ri.getIntersected().getUserID();
-		return -1;
+		return newPart;
 	}
 }
