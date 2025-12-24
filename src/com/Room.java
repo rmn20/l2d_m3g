@@ -118,8 +118,10 @@ public class Room {
 	 */
 	public final boolean sphereCast(Vector3D pos, int rad) {
 		if(pos.x + rad >= minx && 
+			pos.y + rad >= miny && 
 			pos.z + rad >= minz && 
 			pos.x - rad <= maxx && 
+			pos.y - rad <= maxy && 
 			pos.z - rad <= maxz) {
 			
 			return SphereCast.sphereCast(this.mesh, pos, rad);

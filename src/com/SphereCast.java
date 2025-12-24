@@ -163,7 +163,7 @@ public final class SphereCast {
 		int min = len1;
 		if(len2 < min) min = len2;
 		if(len3 < min) min = len3;
-		if(min <= rad * rad) return rad - (int) (1 / MathUtils.invSqrt(min));
+		if(min <= rad * rad) return rad - (int) (1.0f / MathUtils.invSqrt(min));
 		
 		return Integer.MAX_VALUE;
 	}
@@ -195,7 +195,7 @@ public final class SphereCast {
 		if(len2 < min) min = len2;
 		if(len3 < min) min = len3;
 		if(len4 < min) min = len4;
-		if(min <= rad * rad) return rad - (int) (1 / MathUtils.invSqrt(min));
+		if(min <= rad * rad) return rad - (int) (1.0f / MathUtils.invSqrt(min));
 		
 		return Integer.MAX_VALUE;
 	}
