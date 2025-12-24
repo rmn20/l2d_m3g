@@ -353,7 +353,7 @@ public final class House {
 				
 				if(hitY > maxY) {
 					maxY = hitY;
-					newPart = i;
+					newPart = room.getId();
 				}
 			}
 		}
