@@ -160,7 +160,7 @@ public final class SphereCast {
 		temp.x = point.x - (nor.x * dot >> 12);
 		temp.y = point.y - (nor.y * dot >> 12);
 		temp.z = point.z - (nor.z * dot >> 12);
-		if(MathUtils.isPointOnPolygon(a, b, c, nor, temp)) {
+		if(MathUtils.isPointOnPolygon(temp, a, b, c, nor)) {
 			int dis = dot;
 			if(dot < 0) dis = -dot;
 			dis = rad - dis;
@@ -190,7 +190,7 @@ public final class SphereCast {
 		temp.x = point.x - (nor.x * dot >> 12);
 		temp.y = point.y - (nor.y * dot >> 12);
 		temp.z = point.z - (nor.z * dot >> 12);
-		if(MathUtils.isPointOnPolygon(a, b, c, d, nor, temp)) {
+		if(MathUtils.isPointOnPolygon(temp, a, b, c, d, nor)) {
 			int dis = dot;
 			if(dot < 0) dis = -dot;
 			dis = rad - dis;
