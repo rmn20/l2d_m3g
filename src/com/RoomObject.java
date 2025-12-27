@@ -2,34 +2,33 @@ package com;
 
 public abstract class RoomObject {
 
-   private int oldX;
-   private int oldZ;
-   private int part;
+	private int oldX, oldZ;
+	private int part;
 
+	public abstract void render(Renderer g3d);
 
-   public abstract void render(Renderer g3d);
+	public final int getPart() {
+		return part;
+	}
 
-   public final int getPart() {
-      return this.part;
-   }
+	public void setPart(int part) {
+		this.part = part;
+	}
 
-   public void setPart(int part) {
-      this.part = part;
-   }
+	public abstract int getPosX();
+	public abstract int getPosZ();
 
-   public abstract int getPosX();
+	protected boolean isNeedRecomputePart() {
+		int x = getPosX();
+		int z = getPosZ();
 
-   public abstract int getPosZ();
+		if(oldX == x && oldZ == z && part != -1) {
+			return false;
+		} else {
+			oldX = x;
+			oldZ = z;
 
-   protected boolean isNeedRecomputePart() {
-      int var1 = this.getPosX();
-      int var2 = this.getPosZ();
-      if(this.oldX == var1 && this.oldZ == var2 && this.part != -1) {
-         return false;
-      } else {
-         this.oldX = var1;
-         this.oldZ = var2;
-         return true;
-      }
-   }
+			return true;
+		}
+	}
 }
