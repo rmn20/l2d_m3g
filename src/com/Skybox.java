@@ -56,6 +56,22 @@ public class Skybox {
 			if(y2 > this.y2) this.y2 = y2;
 		}
 	}
+	
+	public int getViewportMinX() {
+		return x1;
+	}
+	
+	public int getViewportMaxX() {
+		return x2;
+	}
+	
+	public int getViewportMinY() {
+		return y1;
+	}
+	
+	public int getViewportMaxY() {
+		return y2;
+	}
 
 	public void render(Renderer g3d, Vector3D camPos) {
 		if(animation) {

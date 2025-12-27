@@ -165,6 +165,7 @@ public final class House {
 	}
 
 	public final int render(Renderer g3d, int part, Vector3D camPos) {
+		if(skybox != null) skybox.resetViewport();
 		int rooms = 0;
 		
 		if(part != -1) {
@@ -196,7 +197,6 @@ public final class House {
 
 		if(skybox != null && skybox.isVisible()) {
 			skybox.render(g3d, camPos);
-			skybox.resetViewport();
 		}
 
 		return rooms;
@@ -282,6 +282,14 @@ public final class House {
 					room.getViewportMinX()+ x, room.getViewportMinY() + y,
 					room.getViewportMaxX() - 1 - room.getViewportMinX(),
 					room.getViewportMaxY() - 1 - room.getViewportMinY());
+		}
+		
+		if(skybox != null && skybox.isVisible()) {
+			g.setColor(0x00ffff);
+			g.drawRect(
+					skybox.getViewportMinX()+ x, skybox.getViewportMinY() + y,
+					skybox.getViewportMaxX() - 1 - skybox.getViewportMinX(),
+					skybox.getViewportMaxY() - 1 - skybox.getViewportMinY());
 		}
 		
 		g.setColor(oldColor);
