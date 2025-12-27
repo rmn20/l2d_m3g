@@ -33,8 +33,10 @@ public class Scene {
 		this.max_enemy_count = max_enemy_count;
 		this.frequency = frequency;
 		this.countWorldSize(house);
-		this.bots = new Bot[5];
-		this.bots[0] = new BigZombie(new Vector3D());
+		
+		this.bots = new Bot[Math.min(max_enemy_count, 5)];
+		
+		if(bots.length > 0) this.bots[0] = new BigZombie(new Vector3D());
 
 		for(width = 1; width < this.bots.length; ++width) {
 			this.bots[width] = new Zombie(new Vector3D());
