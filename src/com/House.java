@@ -2,9 +2,6 @@ package com;
 
 import java.util.Vector;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.m3g.Group;
-import javax.microedition.m3g.Mesh;
-import javax.microedition.m3g.RayIntersection;
 
 public final class House {
 
@@ -16,7 +13,7 @@ public final class House {
 	private Skybox skybox;
 	private Vector objects = new Vector(); // из Room
 	
-	private final RayIntersection ri = new RayIntersection();
+	private final Ray ray = new Ray();
 
 	public House(Room[] rooms, Room[][] neighbours, Portal[] portals) {
 		this.rooms = rooms;
@@ -109,58 +106,29 @@ public final class House {
 	}
 
 	public final void rayCast(int part, Ray ray) {
-		
-		Vector3D rayStart = ray.start;
-		Vector3D rayDir = ray.dir;
-		
-		boolean hit = false;
-		float d = Float.MAX_VALUE;
-
 		Vector nearRooms = getNearRooms(part);
 		
 		for(int i = 0; i < nearRooms.size(); ++i) {
 			Room room = (Room) nearRooms.elementAt(i);
-			
-			boolean tmpHit = room.getGroup().pick(-1, rayStart.x, rayStart.y, rayStart.z, rayDir.x, rayDir.y, rayDir.z, ri);
-			
-			if(tmpHit) {
-				hit = true;
-				if(ri.getDistance() < d) d = ri.getDistance();
-			}
-		}
-		
-		if(hit) {
-			if(d > 1) return;
-			
-			ray.collision = true;
-			ray.collisionPoint.x = (int) (rayStart.x + rayDir.x * d);
-			ray.collisionPoint.y = (int) (rayStart.y + rayDir.y * d);
-			ray.collisionPoint.z = (int) (rayStart.z + rayDir.z * d);
-			
-			ray.distance = (int) (d * 4096);
+			room.rayCast(ray);
 		}
 	}
 
 	// ??? максимальное значение y дома (house), которое ниже точки (x,y,z)
 	public final int getFloorY(int part, int x, int y, int z) {
-		boolean hit = false;
-		float d = Float.MAX_VALUE;
+		ray.reset();
+		ray.start.set(x, y, z);
 		
 		Vector nearRooms = getNearRooms(part);
 
 		for(int i = 0; i < nearRooms.size(); ++i) {
 			Room room = (Room) nearRooms.elementAt(i);
 			
-			boolean tmpHit = room.getGroup().pick(-1, x, y, z, 0, -1, 0, ri);
-			
-			if(tmpHit) {
-				hit = true;
-				if(ri.getDistance() < d) d = ri.getDistance();
-			}
+			ray.dir.set(0, -(room.getMaxY() - room.getMinY()), 0);
+			room.rayCast(ray);
 		}
 		
-		//normal y < 0 is ignored due to back face culling
-		if(hit) return y - (int) d;
+		if(ray.collision && ray.normal.y < 0) return ray.collisionPoint.y;
 		return Integer.MAX_VALUE;
 	}
 
@@ -321,7 +289,9 @@ public final class House {
 		if(obj.isNeedRecomputePart()) {
 			int x = obj.getPosX();
 			int z = obj.getPosZ();
-			int part = this.computePart(obj.getPart(), x, z);
+			
+			int oldPart = obj.getPart();
+			int part = computePart(oldPart, x, z);
 			
 			if(part == -1) {
 				System.out.println("House.recalculatePart: newPart == -1  x=" + x + " z=" + z + "  " + obj);
@@ -335,8 +305,13 @@ public final class House {
 	public final int computePart(int oldPart, int x, int z) {
 		if(oldPart != -1) {
 			Room oldRoom = rooms[oldPart];
-			boolean hit = oldRoom.getGroup().pick(-1, x, oldRoom.getMaxY() + 1, z, 0, -1, 0, ri);
-			if(hit) return oldPart;
+			
+			ray.reset();
+			ray.start.set(x, oldRoom.getMaxY() + 1, z);
+			ray.dir.set(0, -(oldRoom.getMaxY() - oldRoom.getMinY() + 1), 0);
+			
+			oldRoom.rayCast(ray);
+			if(ray.collision) return oldPart;
 
 			int newPart = computePartRoomsList(neighbours[oldPart], x, z);
 			if(newPart != -1) return newPart;
@@ -348,21 +323,20 @@ public final class House {
 	
 	private final int computePartRoomsList(Room[] rooms, int x, int z) {
 		int newPart = -1;
-		float maxY = -Float.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
 		
 		for(int i = 0; i < rooms.length; i++) {
 			Room room = rooms[i];
 		
-			float startY = room.getMaxY() + 1;
-			boolean tmpHit = room.getGroup().pick(-1, x, startY, z, 0, -1, 0, ri);
+			ray.reset();
+			ray.start.set(x, room.getMaxY() + 1, z);
+			ray.dir.set(0, -(room.getMaxY() - room.getMinY() + 1), 0);
 			
-			if(tmpHit) {
-				float hitY = startY - ri.getDistance();
-				
-				if(hitY > maxY) {
-					maxY = hitY;
-					newPart = room.getId();
-				}
+			room.rayCast(ray);
+			
+			if(ray.collision && ray.collisionPoint.y > maxY) {
+				maxY = ray.collisionPoint.y;
+				newPart = room.getId();
 			}
 		}
 		

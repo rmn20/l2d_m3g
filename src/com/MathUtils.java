@@ -115,33 +115,103 @@ public final class MathUtils {
 		return var3 * var3 + var4 * var4 + var13 * var13;
 	}
 
-	public static boolean isPointOnPolygon(Vector3D a, Vector3D b, Vector3D c, Vector3D normal, Vector3D point) {
-		int var5 = normal.x > 0 ? normal.x : -normal.x;
-		int var6 = normal.y > 0 ? normal.y : -normal.y;
-		int var7 = normal.z > 0 ? normal.z : -normal.z;
-		return var5 >= var6 && var5 >= var7 ? (normal.x >= 0 ? isPointOnPolygon(point.z, point.y, a.z, a.y, b.z, b.y, c.z, c.y) : isPointOnPolygon(point.z, point.y, c.z, c.y, b.z, b.y, a.z, a.y)) : (var6 >= var5 && var6 >= var7 ? (normal.y >= 0 ? isPointOnPolygon(point.x, point.z, a.x, a.z, b.x, b.z, c.x, c.z) : isPointOnPolygon(point.x, point.z, c.x, c.z, b.x, b.z, a.x, a.z)) : (var7 >= var5 && var7 >= var6 ? (normal.z <= 0 ? isPointOnPolygon(point.x, point.y, a.x, a.y, b.x, b.y, c.x, c.y) : isPointOnPolygon(point.x, point.y, c.x, c.y, b.x, b.y, a.x, a.y)) : true));
-	}
+	    public static boolean isPointOnPolygon(Vector3D point, Vector3D a, Vector3D b, Vector3D c, Vector3D d, Vector3D normal) {
+        final int nx = normal.x>0 ? normal.x : -normal.x;
+        final int ny = normal.y>0 ? normal.y : -normal.y;
+        final int nz = normal.z>0 ? normal.z : -normal.z;
 
-	public static boolean isPointOnPolygon(int px, int py, int x1, int y1, int x2, int y2, int x3, int y3) {
-		return (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1) > 0 ? false : ((x3 - x2) * (py - y2) - (px - x2) * (y3 - y2) > 0 ? false : (x1 - x3) * (py - y3) - (px - x3) * (y1 - y3) <= 0);
-	}
+        if (  nx >= ny && nx >= nz ) {
+            if(normal.x >= 0) {
+                return isPointOnPolygon( point.z, point.y, a.z, a.y, b.z, b.y, c.z, c.y, d.z, d.y );
+            } else {
+                return isPointOnPolygon( point.z, point.y, d.z, d.y, c.z, c.y, b.z, b.y, a.z, a.y );
+            }
+        }
+        if (  ny >= nx && ny >= nz ) {
+            if(normal.y >= 0) {
+                return isPointOnPolygon( point.x, point.z, a.x, a.z, b.x, b.z, c.x, c.z, d.x, d.z );
+            } else {
+                return isPointOnPolygon( point.x, point.z, d.x, d.z, c.x, c.z, b.x, b.z, a.x, a.z );
+            }
+        }
+        if (  nz >= nx && nz >= ny ) {
+            if(normal.z <= 0) {
+                return isPointOnPolygon( point.x, point.y, a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y );
+            } else {
+                return isPointOnPolygon( point.x, point.y, d.x, d.y, c.x, c.y, b.x, b.y, a.x, a.y );
+            }
+        }
+        return true;
+    }
+    
+    public static boolean isPointOnPolygon(Vector3D point, Vector3D a, Vector3D b, Vector3D c, Vector3D normal) {
+        final int nx = normal.x>0 ? normal.x : -normal.x;
+        final int ny = normal.y>0 ? normal.y : -normal.y;
+        final int nz = normal.z>0 ? normal.z : -normal.z;
 
-	public static boolean isPointOnPolygon(Vector3D a, Vector3D b, Vector3D c, Vector3D d, Vector3D normal, Vector3D point) {
-		int var6 = normal.x > 0 ? normal.x : -normal.x;
-		int var7 = normal.y > 0 ? normal.y : -normal.y;
-		int var8 = normal.z > 0 ? normal.z : -normal.z;
-		return var6 >= var7 && var6 >= var8 ? (normal.x >= 0 ? isPointOnPolygon(point.z, point.y, a.z, a.y, b.z, b.y, c.z, c.y, d.z, d.y) : isPointOnPolygon(point.z, point.y, d.z, d.y, c.z, c.y, b.z, b.y, a.z, a.y)) : (var7 >= var6 && var7 >= var8 ? (normal.y >= 0 ? isPointOnPolygon(point.x, point.z, a.x, a.z, b.x, b.z, c.x, c.z, d.x, d.z) : isPointOnPolygon(point.x, point.z, d.x, d.z, c.x, c.z, b.x, b.z, a.x, a.z)) : (var8 >= var6 && var8 >= var7 ? (normal.z <= 0 ? isPointOnPolygon(point.x, point.y, a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y) : isPointOnPolygon(point.x, point.y, d.x, d.y, c.x, c.y, b.x, b.y, a.x, a.y)) : true));
-	}
-
-	public static boolean isPointOnPolygon(int px, int py, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
-		return (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1) > 0 ? false : ((x3 - x2) * (py - y2) - (px - x2) * (y3 - y2) > 0 ? false : ((x4 - x3) * (py - y3) - (px - x3) * (y4 - y3) > 0 ? false : (x1 - x4) * (py - y4) - (px - x4) * (y1 - y4) <= 0));
-	}
-
-	/*public static boolean isPointOnPolygon(int px, int pz, Vertex a, Vertex b, Vertex c, int norY) {
-		return norY > 0 ? isPointOnPolygon(px, pz, a.x, a.z, b.x, b.z, c.x, c.z) : (norY < 0 ? isPointOnPolygon(px, pz, c.x, c.z, b.x, b.z, a.x, a.z) : false);
-	}
-
-	public static boolean isPointOnPolygon(int px, int pz, Vertex a, Vertex b, Vertex c, Vertex d, int norY) {
-		return norY > 0 ? isPointOnPolygon(px, pz, a.x, a.z, b.x, b.z, c.x, c.z, d.x, d.z) : (norY < 0 ? isPointOnPolygon(px, pz, d.x, d.z, c.x, c.z, b.x, b.z, a.x, a.z) : false);
-	}*/
+        if (  nx >= ny && nx >= nz ) {
+            if(normal.x >= 0) {
+                return isPointOnPolygon( point.z, point.y, a.z, a.y, b.z, b.y, c.z, c.y );
+            } else {
+                return isPointOnPolygon( point.z, point.y, c.z, c.y, b.z, b.y, a.z, a.y );
+            }
+        }
+        if (  ny >= nx && ny >= nz ) {
+            if(normal.y >= 0) {
+                return isPointOnPolygon( point.x, point.z, a.x, a.z, b.x, b.z, c.x, c.z );
+            } else {
+                return isPointOnPolygon( point.x, point.z, c.x, c.z, b.x, b.z, a.x, a.z );
+            }
+        }
+        if (  nz >= nx && nz >= ny ) {
+            if(normal.z <= 0) {
+                return isPointOnPolygon( point.x, point.y, a.x, a.y, b.x, b.y, c.x, c.y );
+            } else {
+                return isPointOnPolygon( point.x, point.y, c.x, c.y, b.x, b.y, a.x, a.y );
+            }
+        }
+        return true;
+    }
+    
+    public static boolean isPointOnPolygon(int px, int pz, 
+                                           int ax, int az,
+                                           int bx, int bz,
+                                           int cx, int cz, 
+                                           int dx, int dz,
+                                           int norY) {
+        if(norY > 0) {
+            return isPointOnPolygon(px, pz, ax, az, bx, bz, cx, cz, dx, dz);
+        }
+        if(norY < 0) {
+            return isPointOnPolygon(px, pz, dx, dz, cx, cz, bx, bz, ax, az);
+        }
+        return false;
+    }
+    
+    public static boolean isPointOnPolygon(int px, int pz, 
+                                           int ax, int az,
+                                           int bx, int bz,
+                                           int cx, int cz, 
+                                           int norY) {
+        if(norY > 0) {
+            return isPointOnPolygon(px, pz, ax, az, bx, bz, cx, cz);
+        }
+        if(norY < 0) {
+            return isPointOnPolygon(px, pz, cx, cz, bx, bz, ax, az);
+        }
+        return false;
+    }
+    
+    public static boolean isPointOnPolygon(int px, int py, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+        return  (x2-x1)*(py-y1) <= (px-x1)*(y2-y1) &&
+                (x3-x2)*(py-y2) <= (px-x2)*(y3-y2) &&
+                (x4-x3)*(py-y3) <= (px-x3)*(y4-y3) &&
+                (x1-x4)*(py-y4) <= (px-x4)*(y1-y4);
+    }
+    
+    public static boolean isPointOnPolygon(int px, int py, int x1, int y1, int x2, int y2, int x3, int y3) {
+        return  (x2-x1)*(py-y1) <= (px-x1)*(y2-y1) &&
+                (x3-x2)*(py-y2) <= (px-x2)*(y3-y2) && 
+                (x1-x3)*(py-y3) <= (px-x3)*(y1-y3);
+    }
 }

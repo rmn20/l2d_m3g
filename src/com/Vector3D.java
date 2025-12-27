@@ -67,6 +67,10 @@ public final class Vector3D {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
 
+	public final int length() {
+		return (int) Math.sqrt(x * x + y * y + z * z);
+	}
+
 	public final void setLength(int len) {
 		int var2;
 		if((var2 = this.x * this.x + this.y * this.y + this.z * this.z) != len * len) {

@@ -4,10 +4,11 @@ public final class Ray {
 
    boolean collision = false;
    int distance;
+   
    final Vector3D collisionPoint = new Vector3D();
    final Vector3D start = new Vector3D();
    final Vector3D dir = new Vector3D();
-
+   final Vector3D normal = new Vector3D();
 
    public Ray() {
       this.reset();
