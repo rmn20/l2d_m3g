@@ -197,13 +197,14 @@ public final class Weapon {
          Vector3D dirVector = new Vector3D();
 		 dirVector.setFromRotation(playerRot.x, playerRot.y);
 		 
-         ray.reset();
          Vector3D var4 = ray.getStart();
          Vector3D var5 = ray.getDir();
          var4.set(playerPos.x, playerPos.y + player.getCharacter().getHeight(), playerPos.z);
-         var5.set(dirVector.x, dirVector.y, dirVector.z);
+         var5.set(dirVector.x << 1, dirVector.y << 1, dirVector.z << 1);
+		 
          ray.reset();
          house.rayCast(player.getPart(), ray);
+		 
          if(ray.isCollision()) {
             var5.setLength(ray.getDistance());
          }
