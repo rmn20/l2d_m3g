@@ -23,6 +23,14 @@ public final class SphereCast {
 		int meshOffsetY = (int) (mesh.getOffsetY() * mesh.getScale());
 		int meshOffsetZ = (int) (mesh.getOffsetZ() * mesh.getScale());
 		
+		int x1 = (((pos.x - rad - meshOffsetX) << 8) / meshScalefp8) - 1;
+		int y1 = (((pos.y - rad - meshOffsetY) << 8) / meshScalefp8) - 1;
+		int z1 = (((pos.z - rad - meshOffsetZ) << 8) / meshScalefp8) - 1;
+		
+		int x2 = (((pos.x + rad - meshOffsetX) << 8) / meshScalefp8) + 1;
+		int y2 = (((pos.y + rad - meshOffsetY) << 8) / meshScalefp8) + 1;
+		int z2 = (((pos.z + rad - meshOffsetZ) << 8) / meshScalefp8) + 1;
+		
 		boolean col = false;
 		
 		for(int vtxPerPoly = 4, pIdx = 0, nIdx = 0; vtxPerPoly >= 3; vtxPerPoly--) {
@@ -30,33 +38,24 @@ public final class SphereCast {
 			int pEnd = vtxPerPoly == 4 ? quadsCount * 4 : pols.length;
 			
 			for(; pIdx < pEnd; pIdx += vtxPerPoly, nIdx += 3) {
-				int v1Index = pols[pIdx + 0];
-				int v2Index = pols[pIdx + 1];
-				int v3Index = pols[pIdx + 2];
+				int v1Index = pols[pIdx + 0] * 3;
+				int v2Index = pols[pIdx + 1] * 3;
+				int v3Index = pols[pIdx + 2] * 3;
 
 				int 
-						ax = (verts[v1Index * 3 + 0] * meshScalefp8) >> 8, 
-						ay = (verts[v1Index * 3 + 1] * meshScalefp8) >> 8, 
-						az = (verts[v1Index * 3 + 2] * meshScalefp8) >> 8;
-				ax += meshOffsetX;
-				ay += meshOffsetY;
-				az += meshOffsetZ;
+					ax = verts[v1Index + 0], 
+					ay = verts[v1Index + 1], 
+					az = verts[v1Index + 2];
 				
 				int 
-						bx = (verts[v2Index * 3 + 0] * meshScalefp8) >> 8, 
-						by = (verts[v2Index * 3 + 1] * meshScalefp8) >> 8, 
-						bz = (verts[v2Index * 3 + 2] * meshScalefp8) >> 8;
-				bx += meshOffsetX;
-				by += meshOffsetY;
-				bz += meshOffsetZ;
+					bx = verts[v2Index + 0], 
+					by = verts[v2Index + 1], 
+					bz = verts[v2Index + 2];
 				
 				int 
-						cx = (verts[v3Index * 3 + 0] * meshScalefp8) >> 8, 
-						cy = (verts[v3Index * 3 + 1] * meshScalefp8) >> 8, 
-						cz = (verts[v3Index * 3 + 2] * meshScalefp8) >> 8;
-				cx += meshOffsetX;
-				cy += meshOffsetY;
-				cz += meshOffsetZ;
+					cx = verts[v3Index + 0], 
+					cy = verts[v3Index + 1], 
+					cz = verts[v3Index + 2];
 				
 				int maxx = ax;
 				if(bx > maxx) maxx = bx;
@@ -85,15 +84,11 @@ public final class SphereCast {
 				int dx = 0, dy = 0, dz = 0;
 				
 				if(vtxPerPoly == 4) {
-					int v4Index = pols[pIdx + 3];
+					int v4Index = pols[pIdx + 3] * 3;
 
-					dx = (verts[v4Index * 3 + 0] * meshScalefp8) >> 8;
-					dy = (verts[v4Index * 3 + 1] * meshScalefp8) >> 8; 
-					dz = (verts[v4Index * 3 + 2] * meshScalefp8) >> 8;
-					
-					dx += meshOffsetX;
-					dy += meshOffsetY;
-					dz += meshOffsetZ;
+					dx = verts[v4Index + 0];
+					dy = verts[v4Index + 1]; 
+					dz = verts[v4Index + 2];
 					
 					if(dx > maxx) maxx = dx;
 					if(dx < minx) minx = dx;
@@ -103,16 +98,28 @@ public final class SphereCast {
 					if(dz < minz) minz = dz;
 				}
 				
-				if(maxx < pos.x - rad) continue;
-				if(minx > pos.x + rad) continue;
-				if(maxz < pos.z - rad) continue;
-				if(minz > pos.z + rad) continue;
-				if(maxy < pos.y - rad) continue;
-				if(miny > pos.y + rad) continue;
+				if(maxx < x1) continue;
+				if(minx > x2) continue;
+				if(maxz < z1) continue;
+				if(minz > z2) continue;
+				if(maxy < y1) continue;
+				if(miny > y2) continue;
 				
 				nor.x = norms[nIdx];
 				nor.y = norms[nIdx + 1];
 				nor.z = norms[nIdx + 2];
+				
+				ax = ((ax * meshScalefp8) >> 8) + meshOffsetX;
+				ay = ((ay * meshScalefp8) >> 8) + meshOffsetY;
+				az = ((az * meshScalefp8) >> 8) + meshOffsetZ;
+				
+				bx = ((bx * meshScalefp8) >> 8) + meshOffsetX;
+				by = ((by * meshScalefp8) >> 8) + meshOffsetY;
+				bz = ((bz * meshScalefp8) >> 8) + meshOffsetZ;
+				
+				cx = ((cx * meshScalefp8) >> 8) + meshOffsetX;
+				cy = ((cy * meshScalefp8) >> 8) + meshOffsetY;
+				cz = ((cz * meshScalefp8) >> 8) + meshOffsetZ;
 
 				a.set(ax, ay, az);
 				b.set(bx, by, bz);
@@ -120,6 +127,10 @@ public final class SphereCast {
 				
 				int dis;
 				if(vtxPerPoly == 4) {
+					dx = ((dx * meshScalefp8) >> 8) + meshOffsetX;
+					dy = ((dy * meshScalefp8) >> 8) + meshOffsetY;
+					dz = ((dz * meshScalefp8) >> 8) + meshOffsetZ;
+					
 					d.set(dx, dy, dz);
 					dis = distanceSphereToPolygon(a, b, c, d, nor, pos, rad);
 				} else {
