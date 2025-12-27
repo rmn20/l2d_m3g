@@ -288,13 +288,14 @@ public final class House {
 	public final void recomputePart(RoomObject obj) {
 		if(obj.isNeedRecomputePart()) {
 			int x = obj.getPosX();
+			int y = obj.getPosY();
 			int z = obj.getPosZ();
 			
 			int oldPart = obj.getPart();
-			int part = computePart(oldPart, x, z);
+			int part = computePart(oldPart, x, y, z);
 			
 			if(part == -1) {
-				System.out.println("House.recalculatePart: newPart == -1  x=" + x + " z=" + z + "  " + obj);
+				//System.out.println("House.recalculatePart: newPart == -1  x=" + x + " y=" + y + " z=" + z + "  " + obj);
 			} else {
 				obj.setPart(part);
 			}
@@ -302,26 +303,26 @@ public final class House {
 	}
 
 	//todo disable back face culling
-	public final int computePart(int oldPart, int x, int z) {
+	public final int computePart(int oldPart, int x, int y, int z) {
 		if(oldPart != -1) {
 			Room oldRoom = rooms[oldPart];
 			
 			ray.reset();
-			ray.start.set(x, oldRoom.getMaxY() + 1, z);
-			ray.dir.set(0, -(oldRoom.getMaxY() - oldRoom.getMinY() + 1), 0);
+			ray.start.set(x, y, z);
+			ray.dir.set(0, -(oldRoom.getMaxY() - oldRoom.getMinY()), 0);
 			
 			oldRoom.rayCast(ray);
 			if(ray.collision) return oldPart;
 
-			int newPart = computePartRoomsList(neighbours[oldPart], x, z);
+			int newPart = computePartRoomsList(neighbours[oldPart], x, y, z);
 			if(newPart != -1) return newPart;
 		}
 
-		int newPart = computePartRoomsList(rooms, x, z);
+		int newPart = computePartRoomsList(rooms, x, y, z);
 		return newPart;
 	}
 	
-	private final int computePartRoomsList(Room[] rooms, int x, int z) {
+	private final int computePartRoomsList(Room[] rooms, int x, int y, int z) {
 		int newPart = -1;
 		int maxY = Integer.MIN_VALUE;
 		
@@ -329,8 +330,8 @@ public final class House {
 			Room room = rooms[i];
 		
 			ray.reset();
-			ray.start.set(x, room.getMaxY() + 1, z);
-			ray.dir.set(0, -(room.getMaxY() - room.getMinY() + 1), 0);
+			ray.start.set(x, y, z);
+			ray.dir.set(0, -(room.getMaxY() - room.getMinY()), 0);
 			
 			room.rayCast(ray);
 			

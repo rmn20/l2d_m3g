@@ -7,7 +7,7 @@ public class Respawn {
 
 	public Respawn(Vector3D point, House house) {
 		this.point = point;
-		part = house.computePart(-1, point.x, point.z);
+		part = house.computePart(-1, point.x, point.y, point.z);
 		
 		if(part == -1) {
 			System.out.println("ERROR: неправильная точка старта " + point.x + " " + point.y + " " + point.z);

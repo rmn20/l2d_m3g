@@ -2,7 +2,7 @@ package com;
 
 public abstract class RoomObject {
 
-	private int oldX, oldZ;
+	private int oldX, oldY, oldZ;
 	private int part;
 
 	public abstract void render(Renderer g3d);
@@ -16,16 +16,19 @@ public abstract class RoomObject {
 	}
 
 	public abstract int getPosX();
+	public abstract int getPosY();
 	public abstract int getPosZ();
 
 	protected boolean isNeedRecomputePart() {
 		int x = getPosX();
+		int y = getPosY();
 		int z = getPosZ();
 
-		if(oldX == x && oldZ == z && part != -1) {
+		if(oldX == x && oldY == y && oldZ == z && part != -1) {
 			return false;
 		} else {
 			oldX = x;
+			oldY = y;
 			oldZ = z;
 
 			return true;
