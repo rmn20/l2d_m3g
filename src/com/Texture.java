@@ -1,30 +1,29 @@
 package com;
 
-import javax.microedition.lcdui.Image;
 import javax.microedition.m3g.Image2D;
+import javax.microedition.m3g.Loader;
 
 public class Texture {
 
-	int w;
-	int h;
 	Image2D img;
+	int w, h;
 
-	Texture() {
-	}
-
-	private Texture(Image imgPath) {
-		this.img = new Image2D(Image2D.RGBA, imgPath);
+	private Texture(Image2D img) {
+		this.img = img;
 		
 		this.w = img.getWidth();
 		this.h = img.getHeight();
 	}
 
-	public void destroy() {
-	}
+	public void destroy() {}
 
 	public static Texture createTexture(String file) {
 		try {
-			return new Texture(Image.createImage(file));
+			if(file.toLowerCase().endsWith(".bmp")) {
+				return new Texture(BMPLoader.loadBMP(file));
+			} else {
+				return new Texture((Image2D) Loader.load(file)[0]);
+			}
 		} catch(Exception ex) {
 			System.err.println("ERROR in createTexture " + file + ": " + ex);
 			ex.printStackTrace();
