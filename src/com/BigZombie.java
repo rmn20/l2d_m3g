@@ -17,7 +17,7 @@ public final class BigZombie extends Bot {
 	private Vector3D targetPos = new Vector3D();
 
 	static {
-		Texture tex = Texture.createTexture("/big_zombie.png");
+		Texture tex = Texture.createTexture("/big_zombie.bmp");
 		meshes = MeshData.loadMeshes3D2("/big_zombie.3d2", tex.img, 50.0F * 300, true, false);
 		
 		MeshData mesh = meshes[0];
