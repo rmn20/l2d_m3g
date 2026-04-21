@@ -12,6 +12,8 @@ public final class Renderer {
 	private final Graphics3D g3d = Graphics3D.getInstance();
 	private final Background bck = new Background();
 	
+	private final int g3dClearFlags;
+	
 	public final Vector3D camPos = new Vector3D();
 	public final Vector3D camRot = new Vector3D();
 	private final Camera cam = new Camera();
@@ -49,6 +51,8 @@ public final class Renderer {
 		
 		projXscale = width / viewportPhysW;
 		projYscale = height / viewportPhysH;
+		
+		g3dClearFlags = "1.0".equals(System.getProperty("microedition.m3g.version")) ? 0 : Graphics3D.OVERWRITE;
 		
 		//Hashtable params = g3d.getProperties();
 		//System.out.println("maxLights: " + params.get("maxLights"));
@@ -162,7 +166,7 @@ public final class Renderer {
 	public final void prepareRender(Graphics g, int x, int y) {
 		this.renderX = x;
 		this.renderY = y;
-		g3d.bindTarget(g, true, Graphics3D.OVERWRITE);
+		g3d.bindTarget(g, true, g3dClearFlags);
 		g3d.setViewport(x, y, width, height);
 		g3d.clear(bck);
 		
