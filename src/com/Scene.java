@@ -146,6 +146,8 @@ public class Scene {
 		if(this.frame % 5 == 0) { // 5
 			for(var7 = 0; var7 < var6.size(); ++var7) {
 				var8 = (GameObject) var6.elementAt(var7);
+				if(!(var8 instanceof Bot)) continue;
+				
 				House var10000 = var4.house;
 				int var10001 = var8.getPart();
 				int var11 = var5;
