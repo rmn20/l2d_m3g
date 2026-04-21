@@ -1,15 +1,16 @@
 package com;
 
 import java.util.Vector;
-import javax.microedition.lcdui.Canvas;
 
 public class HouseCreator {
 
 	//public l() {}
 	public static House create(MeshData[] meshes) {
+		int roomsCount = meshes.length - 1;
+		if(roomsCount == 0) roomsCount = 1;
 		
-		Room[] rooms = new Room[meshes.length - 1]; // rooms
-		Vector[] roomPortals = new Vector[rooms.length];
+		Room[] rooms = new Room[roomsCount]; // rooms
+		Vector[] roomPortals = new Vector[roomsCount];
 
 		// создание комнат
 		for(int i = 0; i < rooms.length; ++i) {
@@ -19,67 +20,72 @@ public class HouseCreator {
 			roomPortals[i] = new Vector();
 		}
 		
-		MeshData portalsMesh = meshes[meshes.length - 1];
+		Portal[] portals;
 		
-		short[] pols = portalsMesh.getPols();
-		
-		int quadsCount = portalsMesh.getQuadsCount();
-		int trisCount = portalsMesh.getTrisCount();
-		
-		Portal[] portals = new Portal[quadsCount + trisCount];
-		System.out.println(portals.length + " portals");
-		
-		for(int i = 0; i < portals.length; i++) {
-			Vector3D[] portalVerts;
+		if(meshes.length == 1) {
+			portals = new Portal[0];
+		} else {
+			MeshData portalsMesh = meshes[meshes.length - 1];
 
-			if(i < quadsCount) {
-				int tmpI = i * 4; 
-				
-				portalVerts = new Vector3D[] {
-					portalsMesh.getVertex(pols[tmpI], true),
-					portalsMesh.getVertex(pols[tmpI + 1], true),
-					portalsMesh.getVertex(pols[tmpI + 2], true),
-					portalsMesh.getVertex(pols[tmpI + 3], true)
-				};
-			} else {
-				int tmpI = (quadsCount * 4) + (i - quadsCount) * 3;
-				
-				portalVerts = new Vector3D[] {
-					portalsMesh.getVertex(pols[tmpI], true),
-					portalsMesh.getVertex(pols[tmpI + 1], true),
-					portalsMesh.getVertex(pols[tmpI + 2], true)
-				};
-			}
-			
-			Room room1 = null, room2 = null;
-			int room1CommonVtx = 0, room2CommonVtx = 0;
-			
-			for(int t=0; t<rooms.length; t++) {
-				Room room = rooms[t];
-				
-				int vtxCommon = countCommonVtx(room.getMesh(), portalVerts);
-				
-				if(vtxCommon > 0) {
-					if(vtxCommon > room1CommonVtx) {
-						room2 = room1;
-						room2CommonVtx = room1CommonVtx;
-						
-						room1 = room;
-						room1CommonVtx = vtxCommon;
-					} else if(vtxCommon > room2CommonVtx) {
-						room2 = room;
-						room2CommonVtx = vtxCommon;
+			short[] pols = portalsMesh.getPols();
+
+			int quadsCount = portalsMesh.getQuadsCount();
+			int trisCount = portalsMesh.getTrisCount();
+
+			portals = new Portal[quadsCount + trisCount];
+
+			for(int i = 0; i < portals.length; i++) {
+				Vector3D[] portalVerts;
+
+				if(i < quadsCount) {
+					int tmpI = i * 4; 
+
+					portalVerts = new Vector3D[] {
+						portalsMesh.getVertex(pols[tmpI], true),
+						portalsMesh.getVertex(pols[tmpI + 1], true),
+						portalsMesh.getVertex(pols[tmpI + 2], true),
+						portalsMesh.getVertex(pols[tmpI + 3], true)
+					};
+				} else {
+					int tmpI = (quadsCount * 4) + (i - quadsCount) * 3;
+
+					portalVerts = new Vector3D[] {
+						portalsMesh.getVertex(pols[tmpI], true),
+						portalsMesh.getVertex(pols[tmpI + 1], true),
+						portalsMesh.getVertex(pols[tmpI + 2], true)
+					};
+				}
+
+				Room room1 = null, room2 = null;
+				int room1CommonVtx = 0, room2CommonVtx = 0;
+
+				for(int t=0; t<rooms.length; t++) {
+					Room room = rooms[t];
+
+					int vtxCommon = countCommonVtx(room.getMesh(), portalVerts);
+
+					if(vtxCommon > 0) {
+						if(vtxCommon > room1CommonVtx) {
+							room2 = room1;
+							room2CommonVtx = room1CommonVtx;
+
+							room1 = room;
+							room1CommonVtx = vtxCommon;
+						} else if(vtxCommon > room2CommonVtx) {
+							room2 = room;
+							room2CommonVtx = vtxCommon;
+						}
 					}
 				}
+
+				Portal p = new Portal(portalVerts);
+				portals[i] = p;
+
+				setPortalRooms(p, room1, room2);
+
+				if(room1 != null) roomPortals[room1.getId()].addElement(p);
+				if(room2 != null) roomPortals[room2.getId()].addElement(p);
 			}
-			
-			Portal p = new Portal(portalVerts);
-			portals[i] = p;
-			
-			setPortalRooms(p, room1, room2);
-			
-			if(room1 != null) roomPortals[room1.getId()].addElement(p);
-			if(room2 != null) roomPortals[room2.getId()].addElement(p);
 		}
 		
 		for(int i=0; i<rooms.length; i++) {
