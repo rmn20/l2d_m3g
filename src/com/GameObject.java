@@ -88,4 +88,8 @@ public abstract class GameObject extends RoomObject {
 	public final int getPosZ() {
 		return this.character.getPosition().z;
 	}
+
+	public final int getHeight() {
+		return this.character.getHeight();
+	}
 }

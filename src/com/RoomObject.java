@@ -18,6 +18,8 @@ public abstract class RoomObject {
 	public abstract int getPosX();
 	public abstract int getPosY();
 	public abstract int getPosZ();
+	
+	public abstract int getHeight();
 
 	protected boolean isNeedRecomputePart() {
 		int x = getPosX();

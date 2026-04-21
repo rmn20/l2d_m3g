@@ -288,7 +288,7 @@ public final class House {
 	public final void recomputePart(RoomObject obj) {
 		if(obj.isNeedRecomputePart()) {
 			int x = obj.getPosX();
-			int y = obj.getPosY();
+			int y = obj.getPosY() + obj.getHeight();
 			int z = obj.getPosZ();
 			
 			int oldPart = obj.getPart();
