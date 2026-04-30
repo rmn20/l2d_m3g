@@ -107,7 +107,7 @@ public class HouseCreator {
 
 		for(int i = 0; i < rooms.length; ++i) {
 			Portal[] roomPortals = rooms[i].getPortals();
-			if(roomPortals == null || roomPortals.length == 0) {
+			if(roomPortals.length == 0) {
 				++disconnectedRooms;
 			}
 		}
@@ -146,7 +146,7 @@ public class HouseCreator {
 					nearRooms.addElement(room1);
 				}
 				
-				if(room2 != room && room2 != null && !nearRooms.contains(room1)) {
+				if(room2 != room && room2 != null && !nearRooms.contains(room2)) {
 					nearRooms.addElement(room2);
 				}
 			}
@@ -181,7 +181,6 @@ public class HouseCreator {
 		int commonVertsBitmask = 0;
 		int commonVerts = 0;
 		
-		Vector3D tmp = new Vector3D();
 		int meshVertsCount = mesh.getVerts().length / 3;
 			
 		for(int meshVtx = 0; meshVtx < meshVertsCount; meshVtx++) {
@@ -193,10 +192,11 @@ public class HouseCreator {
 				
 				Vector3D v2 = portalVerts[pVtx];
 				
-				tmp.set(v);
-				tmp.sub(v2);
-				
-				if(Math.abs(tmp.x) <= 50 && Math.abs(tmp.y) <= 50 && Math.abs(tmp.z) <= 50) {
+				if(
+					Math.abs(v2.x - v.x) <= 50 && 
+					Math.abs(v2.y - v.y) <= 50 && 
+					Math.abs(v2.z - v.z) <= 50
+				) {
 					commonVertsBitmask |= 1 << pVtx;
 					commonVerts++;
 					if(commonVerts == portalVerts.length) return commonVerts;
@@ -209,28 +209,6 @@ public class HouseCreator {
 	
 	private static void setPortalRooms(Portal p, Room room1, Room room2) {
 		if(room1 == null && room2 == null) return;
-		/*Vector3D pCenter = p.getCenter();
-		Vector3D pNormal = p.getNormal();
-		
-		int res = calculateRoomPortalDirection(room1, pCenter, pNormal);
-		int room1Front = res & 0xff, room1Back = (res >> 8) & 0xff;
-		
-		res = calculateRoomPortalDirection(room2, pCenter, pNormal);
-		int room2Front = res & 0xff, room2Back = (res >> 8) & 0xff;
-		
-		if(Math.max(room1Front, room1Back) > Math.max(room2Front, room2Back)) {
-			if(room1Back > room1Front) {
-				Room tmp = room2;
-				room2 = room1;
-				room1 = tmp;
-			}
-		} else {
-			if(room2Front > room2Back) {
-				Room tmp = room2;
-				room2 = room1;
-				room1 = tmp;
-			}
-		}*/
 		
 		Vector3D tmpVec = new Vector3D();
 		float room1Size = Float.POSITIVE_INFINITY, room2Size = Float.POSITIVE_INFINITY;
@@ -246,6 +224,9 @@ public class HouseCreator {
 			tmpVec.sub(room2.getMesh().getAABBMin());
 			room2Size = (float) tmpVec.x * tmpVec.y * tmpVec.z;
 		}
+		
+		//1st room is front room
+		//2nd room is back room
 		
 		if(room1Size < room2Size) {
 			tmpVec.set(room1.getMesh().getAABBMin());
@@ -283,40 +264,4 @@ public class HouseCreator {
 		
 		p.setRooms(room1, room2);
 	}
-	
-	/*private static int calculateRoomPortalDirection(Room room, Vector3D pCenter, Vector3D pNormal) {
-		if(room == null) return 0;
-		
-		//Select 8 points at the room border and one point at the room center
-		//And check which points are in front of the portal or at the back
-		Vector3D aabbMin = room.getMesh().getAABBMin();
-		Vector3D aabbMax = room.getMesh().getAABBMax();
-		
-		Vector3D tmpVec = new Vector3D();
-		int roomFrontVtx = 0, roomBackVtx = 0;
-		
-		for(int i = 0; i < 9; i++) {
-			tmpVec.set(
-				(((i & 1) > 0) ? aabbMax : aabbMin).x,
-				(((i & 2) > 0) ? aabbMax : aabbMin).y, 
-				(((i & 4) > 0) ? aabbMax : aabbMin).z
-				);
-			
-			if(i == 8) {
-				tmpVec.set(aabbMin);
-				tmpVec.add(aabbMax);
-				tmpVec.x /= 2;
-				tmpVec.y /= 2;
-				tmpVec.z /= 2;
-			}
-			
-			tmpVec.sub(pCenter);
-			int dot = tmpVec.dot(pNormal);
-			
-			if(dot > 0) roomFrontVtx++;
-			else if(dot < 0) roomBackVtx++;
-		}
-		
-		return roomFrontVtx | (roomBackVtx << 8);
-	}*/
 }
